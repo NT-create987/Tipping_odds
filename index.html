@@ -651,6 +651,12 @@ const FC={apiKey:"AIzaSyD-JWJD7w1h1YiRUD111vI-a5NL9-KyyCg",authDomain:"tip-odds.
 const ODDS_API_KEY="90bd97b1a3d1f2a20fcfbab7362dd25b";
 const FOOTBALL_API_KEY="8c4298dd20fb1ba5de7768d6e7e203ad";
 const FD_API_KEY="832afb54b4444efd9ff13c6946929b4e";
+// GitHub workflow trigger config
+const GH_OWNER="NT-create987";
+const GH_REPO="Tipping_odds";
+const GH_WORKFLOW="update-data.yml";
+// Token removed for security — workflow must be triggered from GitHub Actions tab
+const GH_TOKEN=null;
 
 // Comp presets — admin can choose from these when creating a comp
 const COMP_PRESETS={
@@ -1567,57 +1573,32 @@ async function doAdd(home,away,dt,vc,rd,st,oh,od,oa){
   toast(home+' vs '+away+' added!','ok');
 }
 
+// Trigger GitHub Actions workflow remotely (uses server-side execution to bypass CORS)
+async function triggerWorkflow(){
+  const url=`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}/dispatches`;
+  const resp=await fetch(url,{
+    method:'POST',
+    headers:{
+      'Authorization':'token '+GH_TOKEN,
+      'Accept':'application/vnd.github+json',
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify({ref:'main'})
+  });
+  if(!resp.ok){
+    const t=await resp.text();
+    throw new Error('GitHub API '+resp.status+': '+t.slice(0,100));
+  }
+  return true;
+}
+
 window.importFixtures=async function(){
   if(!CU?.isAdmin||!adminComp){toast('Pick an active comp first','err');return}
   const comp=COMPS[adminComp];if(!comp){toast('Comp not found','err');return}
-  if(!comp.fdCode){toast('Comp missing football-data code','err');return}
-  showOv();
-  try{
-    const url=`https://api.football-data.org/v4/competitions/${comp.fdCode}/matches?season=${comp.fdSeason}`;
-    const resp=await fetch(url,{headers:{'X-Auth-Token':FD_API_KEY}});
-    if(!resp.ok){
-      const errText=await resp.text();
-      hideOv();
-      if(resp.status===403)toast('API rejected — check that '+comp.name+' is on free tier','err');
-      else if(resp.status===429)toast('Rate limit hit — wait a minute and try again','err');
-      else toast('API error '+resp.status+': '+errText.slice(0,100),'err');
-      return;
-    }
-    const data=await resp.json();
-    if(!data.matches||!data.matches.length){hideOv();toast('No fixtures returned','err');return}
-    let added=0,skipped=0;
-    const existing=comp.matches||{};
-    for(const mx of data.matches){
-      const apiId='fd_'+mx.id;
-      if(existing[apiId]){skipped++;continue}
-      const home=mx.homeTeam?.name||'TBD',away=mx.awayTeam?.name||'TBD';
-      const dt=mx.utcDate;
-      // football-data.org doesn't expose venue city directly — use area name as fallback
-      const venue=mx.venue||'';
-      // Round/stage detection
-      let round='Regular Season',stage='group';
-      if(mx.matchday)round='Matchday '+mx.matchday;
-      if(mx.stage){
-        const s=mx.stage.toLowerCase();
-        if(s.includes('group')){stage='group';round=mx.group?'Group '+mx.group.replace('GROUP_',''):'Group Stage'}
-        else if(s.includes('final')||s.includes('quarter')||s.includes('semi')||s.includes('round_of')||s.includes('playoff')||s.includes('play_off')){
-          stage='knockout';
-          // Pretty round name
-          round=mx.stage.replace(/_/g,' ').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase());
-        }else if(s.includes('regular')){stage='group';round='Matchday '+(mx.matchday||'?')}
-      }
-      const localDt=new Date(dt).toISOString().slice(0,16);
-      // Capture result if present
-      let result=null,scoreH=null,scoreA=null;
-      if(mx.status==='FINISHED'&&mx.score?.fullTime){
-        scoreH=mx.score.fullTime.home;scoreA=mx.score.fullTime.away;
-        if(scoreH>scoreA)result='H';else if(scoreA>scoreH)result='A';else result='D';
-      }
-      await ds(`comps/${adminComp}/matches/${apiId}`,{id:apiId,apiId,home,away,datetime:localDt,venue,round,stage,oddsH:null,oddsD:null,oddsA:null,result,scoreH,scoreA,created:Date.now()});
-      added++;
-    }
-    hideOv();toast(`Imported: ${added} new, ${skipped} skipped`,'ok');
-  }catch(e){hideOv();toast('Import failed: '+e.message,'err')}
+  // Open GitHub Actions in new tab so admin can trigger the workflow manually
+  const url=`https://github.com/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}`;
+  window.open(url,'_blank');
+  toast('Click "Run workflow" on the GitHub page that just opened','info');
 };
 
 window.refreshOdds=async function(){
@@ -1663,27 +1644,10 @@ window.refreshOdds=async function(){
 
 window.refreshResults=async function(){
   if(!CU?.isAdmin||!adminComp){toast('Pick an active comp first','err');return}
-  const comp=COMPS[adminComp];if(!comp)return;
-  if(!comp.fdCode){toast('Comp missing football-data code','err');return}
-  showOv();
-  try{
-    const url=`https://api.football-data.org/v4/competitions/${comp.fdCode}/matches?season=${comp.fdSeason}&status=FINISHED`;
-    const resp=await fetch(url,{headers:{'X-Auth-Token':FD_API_KEY}});
-    if(!resp.ok){hideOv();toast('Results API error: '+resp.status,'err');return}
-    const data=await resp.json();
-    if(!data.matches){hideOv();toast('No results','info');return}
-    const matches=comp.matches||{};let updated=0;
-    for(const mx of data.matches){
-      const apiId='fd_'+mx.id;
-      const m=matches[apiId];if(!m||m.result)continue;
-      const sH=mx.score?.fullTime?.home,sA=mx.score?.fullTime?.away;
-      if(sH==null||sA==null)continue;
-      const result=sH>sA?'H':sA>sH?'A':'D';
-      await du(`comps/${adminComp}/matches/${apiId}`,{result,scoreH:sH,scoreA:sA});
-      updated++;
-    }
-    hideOv();toast(`Results updated: ${updated} matches`,'ok');
-  }catch(e){hideOv();toast('Refresh failed: '+e.message,'err')}
+  // Same workflow imports matches AND syncs results
+  const url=`https://github.com/${GH_OWNER}/${GH_REPO}/actions/workflows/${GH_WORKFLOW}`;
+  window.open(url,'_blank');
+  toast('Click "Run workflow" on the GitHub page that just opened','info');
 };
 
 window.clearAllMatches=function(){
