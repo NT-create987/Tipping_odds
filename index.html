@@ -1100,7 +1100,7 @@ function renderTips(){
   document.getElementById('s-co').textContent=corr;
   document.getElementById('s-bw').textContent=best>0?best:'—';
   matches.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
-  const rnds=[...new Set(matches.map(m=>m.round||'General'))];
+  const rnds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
   const tabs=document.getElementById('ttabs');tabs.innerHTML='';
   if(rnds.length>1){
     if(!curRnd||!rnds.includes(curRnd))curRnd=rnds[0];
@@ -1439,11 +1439,13 @@ function renderAdm(){
   renderLockedRounds();
 }
 
-// Auto-lock rounds whose earliest match is <= 7 days away
+// Auto-lock rounds whose earliest match is <= 7 days away,
+// but skip rounds where admin has manually unlocked (respects override).
 async function autoLockNearRounds(){
   if(!adminComp)return;
   const comp=COMPS[adminComp];if(!comp||!comp.matches)return;
   const locked=comp.lockedRounds||{};
+  const manuallyUnlocked=comp.manuallyUnlockedRounds||{};
   const now=Date.now();
   const SEVEN_DAYS=7*24*60*60*1000;
   // Group matches by round, find earliest kickoff per round
@@ -1453,17 +1455,31 @@ async function autoLockNearRounds(){
     const t=new Date(m.datetime).getTime();
     if(!earliestByRound[m.round]||t<earliestByRound[m.round])earliestByRound[m.round]=t;
   });
-  // Lock any round whose first match is within 7 days and not already locked
+  // Lock any round whose first match is within 7 days, not already locked, and not manually unlocked
   let lockedCount=0;
   for(const [round,earliest] of Object.entries(earliestByRound)){
     const safeKey=round.replace(/[.#$\[\]/]/g,'_');
     if(locked[safeKey])continue;
-    if(earliest-now<=SEVEN_DAYS&&earliest>now-SEVEN_DAYS){ // within next 7 days (or already started)
+    if(manuallyUnlocked[safeKey])continue; // respect admin's manual override
+    if(earliest-now<=SEVEN_DAYS&&earliest>now-SEVEN_DAYS){
       await ds(`comps/${adminComp}/lockedRounds/${safeKey}`,true);
       lockedCount++;
     }
   }
   if(lockedCount>0)toast('🔒 Auto-locked '+lockedCount+' round'+(lockedCount>1?'s':'')+' (kick-off within 7 days)','info');
+}
+
+// Natural-sort comparator for round names like "Matchday 1" vs "Matchday 10"
+function naturalCompare(a,b){
+  const ax=[],bx=[];
+  a.replace(/(\d+)|(\D+)/g,(_,$1,$2)=>{ax.push([$1||Infinity,$2||""])});
+  b.replace(/(\d+)|(\D+)/g,(_,$1,$2)=>{bx.push([$1||Infinity,$2||""])});
+  while(ax.length&&bx.length){
+    const an=ax.shift(),bn=bx.shift();
+    const nn=(an[0]-bn[0])||an[1].localeCompare(bn[1]);
+    if(nn)return nn;
+  }
+  return ax.length-bx.length;
 }
 
 function renderLockedRounds(){
@@ -1472,7 +1488,7 @@ function renderLockedRounds(){
   const comp=COMPS[adminComp];
   if(!comp){el.innerHTML='<div class="emp"><p>No active comp</p></div>';return}
   const matches=comp.matches?Object.values(comp.matches):[];
-  const rounds=[...new Set(matches.map(m=>m.round||'General'))].sort();
+  const rounds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
   const locked=comp.lockedRounds||{};
   if(!rounds.length){el.innerHTML='<div class="emp"><p style="font-size:12px">No matches imported yet</p></div>';return}
   el.innerHTML=rounds.map(rn=>{
@@ -1489,11 +1505,16 @@ window.toggleRoundLock=async function(round){
   if(!adminComp)return;
   const comp=COMPS[adminComp];
   const locked=comp.lockedRounds||{};
-  if(locked[round]){
-    await dr(`comps/${adminComp}/lockedRounds/${round.replace(/[.#$\[\]/]/g,'_')}`);
+  const safeKey=round.replace(/[.#$\[\]/]/g,'_');
+  if(locked[safeKey]){
+    // Unlocking: also flag as manually unlocked so auto-lock won't re-lock it
+    await dr(`comps/${adminComp}/lockedRounds/${safeKey}`);
+    await ds(`comps/${adminComp}/manuallyUnlockedRounds/${safeKey}`,true);
     toast(round+' unlocked','info');
   }else{
-    await ds(`comps/${adminComp}/lockedRounds/${round.replace(/[.#$\[\]/]/g,'_')}`,true);
+    // Locking: clear any manual-unlock flag
+    await ds(`comps/${adminComp}/lockedRounds/${safeKey}`,true);
+    await dr(`comps/${adminComp}/manuallyUnlockedRounds/${safeKey}`);
     toast(round+' locked','ok');
   }
 };
@@ -1553,8 +1574,26 @@ window.createComp=async function(){
 window.deleteComp=function(id){
   const c=COMPS[id];if(!c)return;
   showC('Delete Comp?',`Remove "${c.name}" and all its matches? Pools using this comp will break. Cannot be undone.`,async()=>{
-    showOv();await dr('comps/'+id);hideOv();toast('Comp deleted','ok');
-    if(adminComp===id)adminComp=Object.keys(COMPS)[0]||null;
+    showOv();
+    try{
+      // Delete child collections first, then parent
+      await dr(`comps/${id}/matches`);
+      await dr(`comps/${id}/groups`);
+      await dr(`comps/${id}/lockedRounds`);
+      await dr(`comps/${id}/manuallyUnlockedRounds`);
+      await dr(`comps/${id}/winnerOdds`);
+      await dr(`comps/${id}/scorerOdds`);
+      await dr(`comps/${id}`);
+      hideOv();
+      toast('Comp deleted','ok');
+      if(adminComp===id)adminComp=Object.keys(COMPS).filter(x=>x!==id)[0]||null;
+      // Force re-render
+      renderCompsTab();
+    }catch(e){
+      hideOv();
+      toast('Delete failed: '+e.message,'err');
+      console.error('Delete error:',e);
+    }
   });
 };
 
