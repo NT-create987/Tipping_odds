@@ -95,32 +95,70 @@ jobs:
 
               await sleep(2000);
 
-              // RESULTS REFRESH from football-data.org
+              // FETCH ALL MATCHES from football-data.org (imports new + updates results)
               if (comp.fdCode && comp.fdSeason) {
                 try {
-                  const url = 'https://api.football-data.org/v4/competitions/' + comp.fdCode + '/matches?season=' + comp.fdSeason + '&status=FINISHED';
+                  const url = 'https://api.football-data.org/v4/competitions/' + comp.fdCode + '/matches?season=' + comp.fdSeason;
                   const resResp = await fetch(url, { headers: { 'X-Auth-Token': FD_KEY } });
                   if (!resResp.ok) {
-                    console.log('  Results API error: ' + resResp.status);
+                    console.log('  Matches API error: ' + resResp.status);
                   } else {
                     const resData = await resResp.json();
                     const matches = comp.matches || {};
-                    let resUpdated = 0;
+                    let added = 0, updated = 0, skipped = 0;
                     for (const mx of (resData.matches || [])) {
                       const apiId = 'fd_' + mx.id;
-                      const m = matches[apiId];
-                      if (!m || m.result) continue;
-                      const sH = mx.score && mx.score.fullTime ? mx.score.fullTime.home : null;
-                      const sA = mx.score && mx.score.fullTime ? mx.score.fullTime.away : null;
-                      if (sH == null || sA == null) continue;
-                      const result = sH > sA ? 'H' : sA > sH ? 'A' : 'D';
-                      await fbPatch('comps/' + compId + '/matches/' + apiId, { result, scoreH: sH, scoreA: sA });
-                      resUpdated++;
+                      const existing = matches[apiId];
+                      const home = (mx.homeTeam && mx.homeTeam.name) || 'TBD';
+                      const away = (mx.awayTeam && mx.awayTeam.name) || 'TBD';
+                      const dt = mx.utcDate;
+                      const venue = mx.venue || '';
+                      // Round/stage detection
+                      let round = 'Regular Season', stage = 'group';
+                      if (mx.matchday) round = 'Matchday ' + mx.matchday;
+                      if (mx.stage) {
+                        const s = mx.stage.toLowerCase();
+                        if (s.includes('group')) {
+                          stage = 'group';
+                          round = mx.group ? 'Group ' + mx.group.replace('GROUP_', '') : 'Group Stage';
+                        } else if (s.includes('final') || s.includes('quarter') || s.includes('semi') || s.includes('round_of') || s.includes('playoff') || s.includes('play_off')) {
+                          stage = 'knockout';
+                          round = mx.stage.replace(/_/g, ' ').toLowerCase().replace(/\\b\\w/g, c => c.toUpperCase());
+                        } else if (s.includes('regular')) {
+                          stage = 'group';
+                          round = 'Matchday ' + (mx.matchday || '?');
+                        }
+                      }
+                      const localDt = new Date(dt).toISOString().slice(0, 16);
+                      // Capture result if present
+                      let result = null, scoreH = null, scoreA = null;
+                      if (mx.status === 'FINISHED' && mx.score && mx.score.fullTime) {
+                        scoreH = mx.score.fullTime.home;
+                        scoreA = mx.score.fullTime.away;
+                        if (scoreH > scoreA) result = 'H';
+                        else if (scoreA > scoreH) result = 'A';
+                        else result = 'D';
+                      }
+                      if (!existing) {
+                        // Brand new match — full insert
+                        await fbPatch('comps/' + compId + '/matches/' + apiId, {
+                          id: apiId, apiId, home, away, datetime: localDt, venue, round, stage,
+                          oddsH: null, oddsD: null, oddsA: null,
+                          result, scoreH, scoreA, created: Date.now()
+                        });
+                        added++;
+                      } else if (result && !existing.result) {
+                        // Existing match, new result — just update result fields
+                        await fbPatch('comps/' + compId + '/matches/' + apiId, { result, scoreH, scoreA });
+                        updated++;
+                      } else {
+                        skipped++;
+                      }
                     }
-                    console.log('  Results: ' + resUpdated + ' updated');
+                    console.log('  Matches: ' + added + ' added, ' + updated + ' results, ' + skipped + ' unchanged');
                   }
                 } catch (e) {
-                  console.log('  Results fetch failed:', e.message);
+                  console.log('  Matches fetch failed:', e.message);
                 }
               }
 
