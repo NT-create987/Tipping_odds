@@ -858,7 +858,19 @@ window.doLogin=async function(){
   showOv();
   try{
     const cred=await signInWithEmailAndPassword(auth,email,pass);
-    const ud=await dg('uids/'+cred.user.uid);
+    let ud=await dg('uids/'+cred.user.uid);
+    // Recover missing uids mapping by looking up via email
+    if(!ud){
+      const allUsers=await dg('users');
+      if(allUsers){
+        const foundUsername=Object.keys(allUsers).find(un=>allUsers[un].email===email);
+        if(foundUsername){
+          await ds('uids/'+cred.user.uid,{username:foundUsername});
+          await du('users/'+foundUsername,{uid:cred.user.uid});
+          ud={username:foundUsername};
+        }
+      }
+    }
     if(!ud){hideOv();toast('Account not found','err');return}
     const u=await dg('users/'+ud.username);
     hideOv();
@@ -1987,7 +1999,21 @@ window.confirmScorerPick=async function(){
 // ─── AUTH STATE ────────────────────────
 onAuthStateChanged(auth,async fbUser=>{
   if(fbUser&&!CU){
-    const ud=await dg('uids/'+fbUser.uid);
+    let ud=await dg('uids/'+fbUser.uid);
+    // If uids entry missing, try to find user by email and recreate the mapping
+    if(!ud&&fbUser.email){
+      const allUsers=await dg('users');
+      if(allUsers){
+        const foundUsername=Object.keys(allUsers).find(un=>allUsers[un].email===fbUser.email);
+        if(foundUsername){
+          await ds('uids/'+fbUser.uid,{username:foundUsername});
+          // Also update the user's uid in case it changed
+          await du('users/'+foundUsername,{uid:fbUser.uid});
+          ud={username:foundUsername};
+          console.log('Recovered uids mapping for',foundUsername);
+        }
+      }
+    }
     if(ud){const u=await dg('users/'+ud.username);if(u){
       setUser({name:u.name,username:ud.username,email:u.email,isAdmin:u.isAdmin});
       setTimeout(()=>{const myPools=getMyPools();showPage(myPools.length?'tips':'welcome');document.getElementById('welcomeName').textContent=u.name.split(' ')[0]||u.name},400);
