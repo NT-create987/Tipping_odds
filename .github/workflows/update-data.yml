@@ -1,0 +1,153 @@
+name: Auto-update odds and results
+
+on:
+  schedule:
+    # Every 2 hours at minute 7 — stays within Odds API free tier (~360 calls/month)
+    - cron: '7 */2 * * *'
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update odds and results
+        env:
+          FIREBASE_DATABASE_URL: 'https://tip-odds-default-rtdb.asia-southeast1.firebasedatabase.app'
+          ODDS_API_KEY: '90bd97b1a3d1f2a20fcfbab7362dd25b'
+          FOOTBALL_API_KEY: '8c4298dd20fb1ba5de7768d6e7e203ad'
+        run: |
+          node -e "
+          const FB = process.env.FIREBASE_DATABASE_URL;
+          const ODDS_KEY = process.env.ODDS_API_KEY;
+          const FOOTBALL_KEY = process.env.FOOTBALL_API_KEY;
+
+          async function fbGet(path) {
+            const r = await fetch(FB + '/' + path + '.json');
+            return r.ok ? r.json() : null;
+          }
+          async function fbPatch(path, data) {
+            const r = await fetch(FB + '/' + path + '.json', {
+              method: 'PATCH',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(data)
+            });
+            if (!r.ok) console.error('fbPatch failed:', path, await r.text());
+          }
+
+          (async () => {
+            console.log('🔄 Starting auto-update at', new Date().toISOString());
+            const comps = await fbGet('comps') || {};
+            const compIds = Object.keys(comps);
+            console.log('Found ' + compIds.length + ' comps');
+
+            for (const compId of compIds) {
+              const comp = comps[compId];
+              const lockedRounds = comp.lockedRounds || {};
+              console.log('\\n=== Processing: ' + comp.name + ' ===');
+
+              // 1. ODDS REFRESH
+              if (comp.oddsKey) {
+                try {
+                  const oddsResp = await fetch('https://api.the-odds-api.com/v4/sports/' + comp.oddsKey + '/odds?apiKey=' + ODDS_KEY + '&regions=au&markets=h2h&oddsFormat=decimal');
+                  if (oddsResp.ok) {
+                    const oddsData = await oddsResp.json();
+                    const matches = comp.matches || {};
+                    let oddsUpdated = 0, oddsSkipped = 0;
+                    for (const ev of (oddsData || [])) {
+                      const home = ev.home_team, away = ev.away_team;
+                      const matchEntry = Object.entries(matches).find(([_, m]) => m.home === home && m.away === away);
+                      if (!matchEntry) continue;
+                      const [matchId, match] = matchEntry;
+                      // Skip locked rounds
+                      const safeRound = match.round ? match.round.replace(/[.#\$\[\]/]/g, '_') : '';
+                      if (safeRound && lockedRounds[safeRound]) { oddsSkipped++; continue; }
+                      const bk = (ev.bookmakers || [])[0];
+                      if (!bk) continue;
+                      const market = (bk.markets || []).find(m => m.key === 'h2h');
+                      if (!market) continue;
+                      let oh, od, oa;
+                      market.outcomes.forEach(o => {
+                        if (o.name === home) oh = o.price;
+                        else if (o.name === away) oa = o.price;
+                        else if (o.name === 'Draw') od = o.price;
+                      });
+                      if (oh && oa) {
+                        const jitter = () => 1 + (Math.random() * 0.1 - 0.05);
+                        const update = {
+                          oddsH: oh, oddsD: od || oh, oddsA: oa,
+                          noisyH: Math.round(oh * jitter() * 100) / 100,
+                          noisyD: od ? Math.round(od * jitter() * 100) / 100 : null,
+                          noisyA: Math.round(oa * jitter() * 100) / 100
+                        };
+                        await fbPatch('comps/' + compId + '/matches/' + matchId, update);
+                        oddsUpdated++;
+                      }
+                    }
+                    console.log('  Odds: ' + oddsUpdated + ' updated, ' + oddsSkipped + ' locked');
+                  } else {
+                    const errText = await oddsResp.text();
+                    if (errText.includes('UNKNOWN_SPORT')) {
+                      console.log('  Odds: not in season yet');
+                    } else {
+                      console.log('  Odds error: ' + oddsResp.status);
+                    }
+                  }
+                } catch (e) {
+                  console.log('  Odds fetch failed:', e.message);
+                }
+              }
+
+              // 2. RESULTS REFRESH
+              if (comp.footballLeague && comp.footballSeason) {
+                try {
+                  const resResp = await fetch(
+                    'https://v3.football.api-sports.io/fixtures?league=' + comp.footballLeague + '&season=' + comp.footballSeason + '&status=FT',
+                    { headers: { 'x-apisports-key': FOOTBALL_KEY } }
+                  );
+                  const resData = await resResp.json();
+                  const matches = comp.matches || {};
+                  let resUpdated = 0;
+                  for (const fx of (resData.response || [])) {
+                    const apiId = 'api_' + fx.fixture.id;
+                    const m = matches[apiId];
+                    if (!m || m.result) continue;
+                    const sH = fx.goals.home, sA = fx.goals.away;
+                    if (sH == null || sA == null) continue;
+                    const result = sH > sA ? 'H' : sA > sH ? 'A' : 'D';
+                    await fbPatch('comps/' + compId + '/matches/' + apiId, {
+                      result, scoreH: sH, scoreA: sA
+                    });
+                    resUpdated++;
+                  }
+                  console.log('  Results: ' + resUpdated + ' updated');
+                } catch (e) {
+                  console.log('  Results fetch failed:', e.message);
+                }
+              }
+
+              // 3. AUTO-LOCK rounds within 7 days
+              if (comp.matches) {
+                const earliestByRound = {};
+                Object.values(comp.matches).forEach(m => {
+                  if (!m.round || !m.datetime) return;
+                  const t = new Date(m.datetime).getTime();
+                  if (!earliestByRound[m.round] || t < earliestByRound[m.round])
+                    earliestByRound[m.round] = t;
+                });
+                const now = Date.now();
+                const SEVEN = 7 * 24 * 60 * 60 * 1000;
+                let lockedCount = 0;
+                for (const [round, earliest] of Object.entries(earliestByRound)) {
+                  const safeKey = round.replace(/[.#\$\[\]/]/g, '_');
+                  if (lockedRounds[safeKey]) continue;
+                  if (earliest - now <= SEVEN && earliest > now - SEVEN) {
+                    await fbPatch('comps/' + compId + '/lockedRounds', { [safeKey]: true });
+                    lockedCount++;
+                  }
+                }
+                if (lockedCount) console.log('  Auto-locked ' + lockedCount + ' rounds');
+              }
+            }
+            console.log('\\n✅ Done');
+          })();
+          "
