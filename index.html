@@ -210,12 +210,6 @@ body>*{position:relative;z-index:1}
 
 hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
 
-.bfChk{display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:11px 14px;border:1.5px solid var(--line);border-radius:var(--r);font-size:13px;transition:all .15s}
-.bfChk:hover{border-color:var(--ink)}
-.bfChk input{width:auto;margin-top:3px;cursor:pointer}
-.bfChk:has(input:checked){border-color:var(--green);background:var(--green-light)}
-
-
 .hero{text-align:center;padding:48px 12px 32px;position:relative}
 .hero .pretag{display:inline-block;background:var(--ink);color:var(--paper);font-size:10px;letter-spacing:2px;text-transform:uppercase;padding:5px 14px;border-radius:20px;margin-bottom:18px;font-weight:700}
 .hero h1{font-family:'Archivo Black',sans-serif;font-size:clamp(48px,9vw,84px);line-height:.92;letter-spacing:-2px;margin-bottom:14px}
@@ -258,9 +252,8 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
       <button class="nb" id="nv-grp" onclick="showPage('grp')">Groups</button>
       <button class="nb" id="nv-bkt" onclick="showPage('bkt')">Bracket</button>
       <button class="nb" id="nv-hist" onclick="showPage('hist')">History</button>
-      <button class="nb" id="nv-bonuses" onclick="showPage('bonuses')" style="display:none">Bonuses</button>
       <button class="nb" id="nv-pools" onclick="showPage('pools')">My Pools</button>
-      <button class="nb" id="nv-adm" style="display:none" onclick="showPage('adm')">⚙ Manage</button>
+      <button class="nb" id="nv-adm" style="display:none" onclick="showPage('adm')">⚙ Admin</button>
     </div>
     <div id="ua"></div>
   </div>
@@ -366,17 +359,8 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div class="atitle">Create a <span class="g">Pool</span></div>
     <div class="asub">Set up your own private tipping group. You'll get a code to share.</div>
     <div class="fld" style="text-align:left"><label>Pool Name</label><input type="text" id="cpn" placeholder="e.g. Acme Co. Tipping League"></div>
-    <div class="fld" style="text-align:left"><label>Competition</label><select id="cpc"></select><div class="fhint">Pick which competition this pool will track.</div></div>
-    <hr class="dv">
-    <div class="slabel" style="text-align:left">Bonus Features (Optional)</div>
-    <div style="text-align:left;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <label class="bfChk"><input type="checkbox" id="bf-joker"><div><strong>🎴 Joker</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Each tipper picks one match for double points.</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-koMult"><div><strong>📈 Knockout Multiplier</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">R32–QF: 1.5×, Semis: 2×, Final: 3×</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-winner"><div><strong>🏆 Tournament Winner</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = team odds × 50.</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-scorer"><div><strong>⚽ Top Scorer</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = player odds × 50.</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-noise"><div><strong>🎲 Odds Noise (±5%)</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Adds randomness so the in-app odds don't perfectly match the bookies. Set when admin refreshes odds.</div></div></label>
-    </div>
-    <button class="btn bg-grn bbl" onclick="doCreatePool()">Create Pool →</button>
+    <div class="fld" style="text-align:left"><label>Competition</label><select id="cpc"></select><div class="fhint">Pick from the available comps. Admins manage which comps are live.</div></div>
+    <button class="btn bg-grn bbl" onclick="doCreatePool()" style="margin-top:6px">Create Pool →</button>
     <div class="asw"><a onclick="goBackFromAuth()">← Back</a></div>
   </div>
 </div>
@@ -474,14 +458,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   <div id="hist-list" style="display:flex;flex-direction:column;gap:7px"></div>
 </div>
 
-
-<!-- BONUSES -->
-<div class="page" id="page-bonuses">
-  <div class="ptitle">Bonus <span class="g">Picks</span></div>
-  <div class="psub" id="bonuses-sub">Lock in your special picks before kick-off.</div>
-  <div id="bonuses-content"></div>
-</div>
-
 <!-- ADMIN -->
 <div class="page" id="page-adm">
   <div class="ptitle">⚙ <span class="b">Admin</span></div>
@@ -492,7 +468,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <button class="tp" onclick="aTab('imp',this)">Import API</button>
     <button class="tp" onclick="aTab('res',this)">Results</button>
     <button class="tp" onclick="aTab('grps',this)">Groups</button>
-    <button class="tp" onclick="aTab('bonus',this)">Bonus Setup</button>
     <button class="tp" onclick="aTab('plyr',this)">All Players</button>
   </div>
 
@@ -544,13 +519,8 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="slabel">Refresh Odds</div>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.55">Pulls live decimal odds from The Odds API. Run before each matchday. <strong>Locked rounds (below) are skipped.</strong></p>
+      <p style="color:var(--muted);font-size:13px;margin-bottom:14px;line-height:1.55">Pulls live decimal odds from The Odds API. Run before each matchday.</p>
       <button class="btn bp" onclick="refreshOdds()">🔄 Refresh Odds</button>
-    </div>
-    <div class="card" style="margin-bottom:14px">
-      <div class="slabel">🔒 Locked Rounds</div>
-      <p style="color:var(--muted);font-size:13px;margin-bottom:12px;line-height:1.55">Lock a round so its odds (and noise) don't change when you refresh. Useful once a round's matches are imminent.</p>
-      <div id="lockedRoundsList"></div>
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="slabel">Refresh Results</div>
@@ -572,42 +542,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   <div id="at-grps" style="display:none">
     <div class="ibox">Update group standings manually after each matchday.</div>
     <div id="a-grpform"></div>
-  </div>
-
-  <div id="at-bonus" style="display:none">
-    <div class="ibox">Set tournament-winner odds for each team and the top-scorer odds for each player. These power the Bonus Picks for any pool that uses them.</div>
-    <div class="card" style="margin-bottom:16px">
-      <div class="slabel">🏆 Tournament Winner Odds (per team)</div>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Add each team with their pre-tournament outright odds. Used to calculate winner-pick bonus.</p>
-      <div class="fr">
-        <div class="fld"><label>Team</label><input type="text" id="aw-team" placeholder="e.g. Brazil"></div>
-        <div class="fld"><label>Outright Odds</label><input type="number" id="aw-odds" step="0.1" min="1.01" placeholder="5.00" inputmode="decimal"></div>
-      </div>
-      <button class="btn bg-grn bsm" onclick="addWinnerOdds()">Add Team</button>
-      <hr class="dv">
-      <div id="winner-odds-list"></div>
-      <hr class="dv">
-      <div class="slabel">Set Tournament Winner (after the final)</div>
-      <select id="aw-result" style="margin-bottom:10px"></select>
-      <button class="btn bp bsm" onclick="setTournamentWinner()">Lock Winner & Award Bonuses</button>
-      <div id="aw-current" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
-    </div>
-    <div class="card">
-      <div class="slabel">⚽ Top Scorer Odds (per player)</div>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Add players who could win the Golden Boot.</p>
-      <div class="fr">
-        <div class="fld"><label>Player</label><input type="text" id="as-player" placeholder="e.g. Kylian Mbappé"></div>
-        <div class="fld"><label>Outright Odds</label><input type="number" id="as-odds" step="0.1" min="1.01" placeholder="6.00" inputmode="decimal"></div>
-      </div>
-      <button class="btn bg-grn bsm" onclick="addScorerOdds()">Add Player</button>
-      <hr class="dv">
-      <div id="scorer-odds-list"></div>
-      <hr class="dv">
-      <div class="slabel">Set Top Scorer (after the final)</div>
-      <select id="as-result" style="margin-bottom:10px"></select>
-      <button class="btn bp bsm" onclick="setTopScorer()">Lock Scorer & Award Bonuses</button>
-      <div id="as-current" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
-    </div>
   </div>
 
   <div id="at-plyr" style="display:none">
@@ -657,62 +591,8 @@ let MY_POOL=null;        // resolved current pool object
 let MY_COMP=null;        // resolved current comp object
 
 // ─── HELPERS ────────────────────────
-// Each match is worth exactly 100 points distributed across outcomes.
-// Points for an outcome = 100 × (its odds ÷ sum of all match odds)
-// This means halving the probability of an outcome doubles its points.
-// If the pool has 'noise' bonus enabled, uses the per-match noisyH/D/A values instead.
-function getMatchOdds(match,pool){
-  const useNoisy=pool?.bonuses?.noise&&match.noisyH;
-  return{
-    oH:useNoisy?+match.noisyH:+match.oddsH,
-    oD:useNoisy&&match.noisyD?+match.noisyD:+match.oddsD,
-    oA:useNoisy?+match.noisyA:+match.oddsA
-  };
-}
-function calcMatchPts(match,pick,pool){
-  if(!match||!match.oddsH||match.oddsH<1.01)return 0;
-  const{oH,oD,oA}=getMatchOdds(match,pool||MY_POOL);
-  const ko=match.stage==='knockout';
-  if(ko){
-    const sum=oH+oA;
-    if(pick==='H')return Math.round(100*oH/sum);
-    if(pick==='A')return Math.round(100*oA/sum);
-    return 0;
-  }
-  if(!oD||oD<1.01)return 0;
-  const sum=oH+oD+oA;
-  if(pick==='H')return Math.round(100*oH/sum);
-  if(pick==='D')return Math.round(100*oD/sum);
-  if(pick==='A')return Math.round(100*oA/sum);
-  return 0;
-}
-// Implied probability still useful for display
+const calcP=o=>!o||o<1.01?0:Math.round(100-(1/o)*100);
 const impP=o=>!o||o<1.01?0:Math.round((1/o)*100);
-// Knockout stage multipliers (when koMult bonus is on)
-function koMultiplier(round){
-  if(!round)return 1;
-  const r=round.toLowerCase();
-  if(r.includes('final')&&!r.includes('semi')&&!r.includes('quarter'))return 3;
-  if(r.includes('semi'))return 2;
-  if(r.includes('round of')||r.includes('quarter'))return 1.5;
-  return 1;
-}
-// Calculate a tip's actual points using the LATEST match odds
-// (so refreshing odds updates everyone's potential points)
-function tipPoints(match,tip,pool,extras){
-  if(!tip||!match.result||tip.pick!==match.result)return 0;
-  // Always recalculate from current odds — not the stored tip.pts
-  let pts=calcMatchPts(match,tip.pick,pool);
-  if(pool?.bonuses?.koMult&&match.stage==='knockout')pts*=koMultiplier(match.round);
-  if(pool?.bonuses?.joker&&extras?.jokerMatchId===match.id)pts*=2;
-  return Math.round(pts);
-}
-// Bonus pick points (tournament winner / top scorer)
-// odds × 50: linear in odds, so halving the probability doubles the points
-function bonusPickPts(decimalOdds){
-  if(!decimalOdds||decimalOdds<1.01)return 0;
-  return Math.round(decimalOdds*50);
-}
 const isKO=m=>m.stage==='knockout';
 const isLk=m=>m.result||(m.datetime&&new Date(m.datetime)<=new Date());
 const genCode=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('')};
@@ -743,7 +623,6 @@ window.showPage=function(id){
   if(id==='grp')renderGrp();
   if(id==='bkt')renderBkt();
   if(id==='hist')renderHist(CU?.username);
-  if(id==='bonuses')renderBonuses();
   if(id==='pools')renderMyPools();
   if(id==='createPool')renderCreatePoolForm();
   if(id==='adm')renderAdm();
@@ -855,9 +734,6 @@ function refreshContext(){
   }
   MY_POOL=CP?POOLS[CP]:null;
   MY_COMP=MY_POOL?COMPS[MY_POOL.compId]:null;
-  // Show/hide Bonuses nav button
-  const showBonuses=MY_POOL?.bonuses&&Object.values(MY_POOL.bonuses).some(v=>v);
-  document.getElementById('nv-bonuses').style.display=showBonuses?'':'none';
   renderPoolSelector();
 
   // If on welcome page but pools exist, redirect
@@ -875,7 +751,6 @@ function refreshAllPages(){
   if(curPage==='pools')renderMyPools();
   if(curPage==='adm')renderAdm();
   if(curPage==='managePool')renderManagePool();
-  if(curPage==='bonuses')renderBonuses();
   if(curPage==='createPool')renderCreatePoolForm();
 }
 
@@ -944,26 +819,20 @@ window.doJoinPool=async function(){
 function renderCreatePoolForm(){
   const sel=document.getElementById('cpc');
   const compArr=Object.values(COMPS);
-  if(!compArr.length){sel.innerHTML='<option value="">No competitions available yet</option>';return}
+  if(!compArr.length){sel.innerHTML='<option value="">No comps available — ask admin</option>';return}
   sel.innerHTML=compArr.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
 }
 window.doCreatePool=async function(){
   const name=document.getElementById('cpn').value.trim();
   const compId=document.getElementById('cpc').value;
   if(!name||!compId){toast('Fill in all fields','err');return}
-  const bonuses={
-    joker:document.getElementById('bf-joker').checked,
-    koMult:document.getElementById('bf-koMult').checked,
-    winner:document.getElementById('bf-winner').checked,
-    scorer:document.getElementById('bf-scorer').checked,
-    noise:document.getElementById('bf-noise').checked
-  };
   showOv();
+  // Generate unique code
   let code,attempts=0;
   do{code=genCode();attempts++}while(Object.values(POOLS).some(p=>p.code===code)&&attempts<10);
   const pid='p'+Date.now()+Math.random().toString(36).slice(2,5);
   await ds('pools/'+pid,{
-    id:pid,name,code,compId,bonuses,
+    id:pid,name,code,compId,
     ownerId:CU.username,
     members:{[CU.username]:{joined:Date.now()}},
     created:Date.now()
@@ -1034,12 +903,9 @@ function renderTips(){
   }
   document.getElementById('tips-rl').textContent=MY_POOL.name+' · '+MY_COMP.name;
   const matches=MY_COMP.matches?Object.values(MY_COMP.matches):[];
-  const tips=getMyTips();
-  const myEx=getMyExtras();
+  const tips=await_getMyTips();
   let pts=0,made=0,corr=0,best=0;
-  matches.forEach(m=>{const t=tips[m.id];if(t){made++;if(m.result&&t.pick===m.result){const p=tipPoints(m,t,MY_POOL,myEx);pts+=p;corr++;if(p>best)best=p}}});
-  if(MY_POOL?.bonuses?.winner&&myEx.winner&&MY_COMP?.tournamentWinner===myEx.winner&&myEx.winnerOdds)pts+=bonusPickPts(myEx.winnerOdds);
-  if(MY_POOL?.bonuses?.scorer&&myEx.scorer&&MY_COMP?.topScorer===myEx.scorer&&myEx.scorerOdds)pts+=bonusPickPts(myEx.scorerOdds);
+  matches.forEach(m=>{const t=tips[m.id];if(t){made++;if(m.result&&t.pick===m.result){pts+=t.pts;corr++;if(t.pts>best)best=t.pts}}});
   document.getElementById('s-pts').textContent=pts;
   document.getElementById('s-nt').textContent=made;
   document.getElementById('s-co').textContent=corr;
@@ -1053,11 +919,11 @@ function renderTips(){
   }else curRnd=rnds[0]||null;
   const vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
   const el=document.getElementById('tlist');
-  if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
+  if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches in this comp yet.<br>The admin can import fixtures from the Admin panel.</p></div>';return}
   el.innerHTML=vis.map(m=>mCard(m,tips[m.id])).join('');
 }
 
-function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
+function await_getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
 function getTipsForPool(poolId,username){
   // Tips are loaded on-demand via Firebase listener. We cache in window._tipsCache
   if(!window._tipsCache)window._tipsCache={};
@@ -1087,15 +953,7 @@ function mCard(m,myTip){
   const tc=tippers.length;
   const memCount=Object.keys(MY_POOL.members||{}).length;
   const hasOdds=m.oddsH&&m.oddsH>=1.01;
-  // Joker info
-  const jokerOn=MY_POOL?.bonuses?.joker;
-  const myExtras=getMyExtras();
-  const isMyJoker=myExtras.jokerMatchId===m.id;
-  const koMultActive=MY_POOL?.bonuses?.koMult&&ko?koMultiplier(m.round):1;
-  let pH=calcMatchPts(m,'H'),pD=!ko?calcMatchPts(m,'D'):0,pA=calcMatchPts(m,'A');
-  // Apply multipliers to display
-  const mult=(koMultActive>1?koMultActive:1)*(isMyJoker?2:1);
-  if(mult>1){pH=Math.round(pH*mult);pD=Math.round(pD*mult);pA=Math.round(pA*mult)}
+  const pH=hasOdds?calcP(+m.oddsH):0,pD=!ko&&hasOdds?calcP(+m.oddsD):0,pA=hasOdds?calcP(+m.oddsA):0;
   const pc=pick=>{let c='op';if(myTip?.pick===pick)c+=' '+(pick==='H'?'sh':pick==='D'?'sd':'sa');if(lk||!hasOdds)c+=' lk';return c};
   let trev='';
   if(lk&&tc>0){
@@ -1105,28 +963,13 @@ function mCard(m,myTip){
     trev=`<div class="tcre"><span>🏠 ${hc}</span>${!ko?`<span>🤝 ${dc}</span>`:''}<span>✈ ${ac}</span><span style="margin-left:auto">${tc}/${memCount} tipped</span></div>`;
   }else if(!lk&&tc>0){trev=`<div class="tcr">👥 ${tc} of ${memCount} have tipped</div>`}
   let banner='';
-  if(m.result&&myTip){
-    const won=myTip.pick===m.result;
-    const finalPts=won?tipPoints(m,myTip,MY_POOL,myExtras):0;
-    banner=won?`<div class="tbn won">✅ Correct! +${finalPts} pts${mult>1?` (${mult}× bonus!)`:''} — ${rm[m.result]}</div>`:`<div class="tbn lost">❌ Wrong — Result: ${rm[m.result]}</div>`;
-  }
+  if(m.result&&myTip){const won=myTip.pick===m.result;banner=won?`<div class="tbn won">✅ Correct! +${myTip.pts} pts — ${rm[m.result]}</div>`:`<div class="tbn lost">❌ Wrong — Result: ${rm[m.result]}</div>`}
   else if(m.result&&!myTip){banner=`<div class="tbn none">⏱ No tip placed — Result: ${rm[m.result]}</div>`}
-  else if(myTip&&!m.result){
-    const livePts=calcMatchPts(m,myTip.pick,MY_POOL)*(mult||1);
-    banner=`<div class="tbn pend">✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct${isMyJoker?' · 🎴 JOKER':''}</div>`;
-  }
-  // Joker button
-  let jokerBtn='';
-  if(jokerOn&&!lk&&myTip){
-    if(isMyJoker)jokerBtn=`<div style="padding:8px 16px;border-top:1px solid var(--line);background:var(--green-light);font-size:12px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--green);font-weight:700">🎴 JOKER PLAYED · 2× points if correct</span><button class="btn bgh bsm" onclick="removeJoker()">Remove</button></div>`;
-    else if(!myExtras.jokerMatchId)jokerBtn=`<div style="padding:8px 16px;border-top:1px solid var(--line);font-size:12px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--muted)">🎴 Joker available</span><button class="btn bgh bsm" onclick="playJoker('${m.id}')">Play Joker Here</button></div>`;
-  }
-  let multBadge='';
-  if(koMultActive>1){multBadge=`<div style="padding:5px 16px;font-size:11px;color:var(--blue);background:var(--blue-light);font-weight:600">📈 ${koMultActive}× knockout multiplier active</div>`}
+  else if(myTip&&!m.result){banner=`<div class="tbn pend">✓ Tip locked: ${rm[myTip.pick]}</div>`}
   const oddsRow=hasOdds?`<div class="or">
-    <div class="${pc('H')}" onclick="pTip('${m.id}','H')"><div class="ol">Home</div><div class="ov2">${pH}</div><div class="op2">pts</div></div>
-    ${!ko?`<div class="${pc('D')}" onclick="pTip('${m.id}','D')"><div class="ol">Draw</div><div class="ov2">${pD}</div><div class="op2">pts</div></div>`:''}
-    <div class="${pc('A')}" onclick="pTip('${m.id}','A')"><div class="ol">Away</div><div class="ov2">${pA}</div><div class="op2">pts</div></div>
+    <div class="${pc('H')}" onclick="pTip('${m.id}','H')"><div class="ol">Home</div><div class="ov2">${impP(+m.oddsH)}%</div><div class="op2">${pH} pts</div></div>
+    ${!ko?`<div class="${pc('D')}" onclick="pTip('${m.id}','D')"><div class="ol">Draw</div><div class="ov2">${impP(+m.oddsD)}%</div><div class="op2">${pD} pts</div></div>`:''}
+    <div class="${pc('A')}" onclick="pTip('${m.id}','A')"><div class="ol">Away</div><div class="ov2">${impP(+m.oddsA)}%</div><div class="op2">${pA} pts</div></div>
   </div>`:`<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Odds will be available closer to kick-off</div>`;
   return`<div class="mc">
     <div class="mh">
@@ -1139,67 +982,9 @@ function mCard(m,myTip){
       <div class="vc">${m.result?`<div class="vs">${m.scoreH??'?'} – ${m.scoreA??'?'}</div>`:`<div class="vt">VS</div>`}</div>
       <div class="tm"><div class="tf">${tF(m.away)}</div><div class="tn">${m.away}</div>${m.awayPH?`<div class="tsub">${m.awayPH}</div>`:''}</div>
     </div>
-    ${multBadge}${oddsRow}${trev}${banner}${jokerBtn}
+    ${oddsRow}${trev}${banner}
   </div>`;
 }
-
-// ─── EXTRAS (joker, winner pick, scorer pick) ────────────
-function getMyExtras(){
-  if(!CU||!CP)return{};
-  if(!window._extrasCache)window._extrasCache={};
-  const key=CP+'/'+CU.username;
-  if(!window._extrasCache[key]){
-    window._extrasCache[key]={};
-    dl(`extras/${CP}/${CU.username}`,v=>{window._extrasCache[key]=v||{};if(['tips','lb','hist','bonuses'].includes(curPage))refreshAllPages()});
-  }
-  return window._extrasCache[key];
-}
-function getAllExtrasForPool(poolId){
-  if(!poolId)return{};
-  if(!window._allExtrasCache)window._allExtrasCache={};
-  if(!window._allExtrasCache[poolId]){
-    window._allExtrasCache[poolId]={};
-    dl(`extras/${poolId}`,v=>{window._allExtrasCache[poolId]=v||{};if(curPage==='lb')refreshAllPages()});
-  }
-  return window._allExtrasCache[poolId];
-}
-
-window.playJoker=async function(mid){
-  if(!CU||!CP)return;
-  const m=MY_COMP?.matches?.[mid];
-  if(!m||isLk(m)){toast('Match locked','err');return}
-  const ex=getMyExtras();
-  if(ex.jokerMatchId){toast('Joker already played','err');return}
-  await ds(`extras/${CP}/${CU.username}/jokerMatchId`,mid);
-  toast('🎴 Joker played!','ok');
-};
-window.removeJoker=async function(){
-  if(!CU||!CP)return;
-  const ex=getMyExtras();
-  if(!ex.jokerMatchId)return;
-  const m=MY_COMP?.matches?.[ex.jokerMatchId];
-  if(m&&isLk(m)){toast('Joker match already locked — can\'t remove','err');return}
-  await dr(`extras/${CP}/${CU.username}/jokerMatchId`);
-  toast('Joker removed','ok');
-};
-window.setWinnerPick=async function(team){
-  if(!CU||!CP)return;
-  // Check if tournament has started (any match locked)
-  const matches=MY_COMP?.matches?Object.values(MY_COMP.matches):[];
-  const started=matches.some(m=>isLk(m));
-  if(started){toast('Locked — tournament has started','err');return}
-  await ds(`extras/${CP}/${CU.username}/winner`,team);
-  toast('Tournament winner set: '+team,'ok');
-};
-window.setScorerPick=async function(player){
-  if(!CU||!CP)return;
-  const matches=MY_COMP?.matches?Object.values(MY_COMP.matches):[];
-  const started=matches.some(m=>isLk(m));
-  if(started){toast('Locked — tournament has started','err');return}
-  await ds(`extras/${CP}/${CU.username}/scorer`,player);
-  toast('Top scorer set: '+player,'ok');
-};
-
 
 window.pTip=async function(mid,pick){
   if(!CU||!CP||!MY_COMP)return;
@@ -1207,7 +992,8 @@ window.pTip=async function(mid,pick){
   if(!m||isLk(m)){toast('Match locked','err');return}
   if(!m.oddsH||m.oddsH<1.01){toast('No odds yet','err');return}
   showOv();
-  const pts=calcMatchPts(m,pick);
+  const odds=pick==='H'?+m.oddsH:pick==='D'?+m.oddsD:+m.oddsA;
+  const pts=calcP(odds);
   await ds(`tips/${CP}/${CU.username}/${mid}`,{pick,pts,ts:Date.now()});
   hideOv();
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
@@ -1225,20 +1011,8 @@ function renderLB(){
   document.getElementById('lb-dn').textContent=matches.filter(m=>m.result).length;
   const sf=lbMode==='group'?'group':lbMode==='knockout'?'knockout':null;
   function uStat(un){
-    const mt=allTips[un]||{};
-    const allExtras=getAllExtrasForPool(CP);
-    const ex=allExtras[un]||{};
-    let pts=0,made=0,corr=0,best=0;
-    matches.forEach(m=>{if(sf&&m.stage!==sf)return;const t=mt[m.id];if(t){made++;if(m.result&&t.pick===m.result){const p=tipPoints(m,t,MY_POOL,ex);pts+=p;corr++;if(p>best)best=p}}});
-    // Bonus picks (winner/scorer) — only count on Overall tab
-    if(!sf){
-      if(MY_POOL?.bonuses?.winner&&ex.winner&&MY_COMP?.tournamentWinner===ex.winner&&ex.winnerOdds){
-        pts+=bonusPickPts(ex.winnerOdds);
-      }
-      if(MY_POOL?.bonuses?.scorer&&ex.scorer&&MY_COMP?.topScorer===ex.scorer&&ex.scorerOdds){
-        pts+=bonusPickPts(ex.scorerOdds);
-      }
-    }
+    const mt=allTips[un]||{};let pts=0,made=0,corr=0,best=0;
+    matches.forEach(m=>{if(sf&&m.stage!==sf)return;const t=mt[m.id];if(t){made++;if(m.result&&t.pick===m.result){pts+=t.pts;corr++;if(t.pts>best)best=t.pts}}});
     return{pts,made,corr,best,pct:made>0?Math.round(corr/made*100):0};
   }
   let topU=0;Object.values(allTips).forEach(pt=>matches.forEach(m=>{if(m.result&&pt[m.id]?.pick===m.result&&pt[m.id].pts>topU)topU=pt[m.id].pts}));
@@ -1264,12 +1038,8 @@ function renderHist(un){
   const mt=allTips[un]||{};
   const ms=(MY_COMP.matches?Object.values(MY_COMP.matches):[]).sort((a,b)=>new Date(b.datetime)-new Date(a.datetime));
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
-  const allEx=getAllExtrasForPool(CP);
-  const ex=allEx[un]||{};
   let pts=0,made=0,corr=0,best=0;
-  ms.forEach(m=>{const t=mt[m.id];if(t){made++;if(m.result&&t.pick===m.result){const p=tipPoints(m,t,MY_POOL,ex);pts+=p;corr++;if(p>best)best=p}}});
-  if(MY_POOL?.bonuses?.winner&&ex.winner&&MY_COMP?.tournamentWinner===ex.winner&&ex.winnerOdds)pts+=bonusPickPts(ex.winnerOdds);
-  if(MY_POOL?.bonuses?.scorer&&ex.scorer&&MY_COMP?.topScorer===ex.scorer&&ex.scorerOdds)pts+=bonusPickPts(ex.scorerOdds);
+  ms.forEach(m=>{const t=mt[m.id];if(t){made++;if(m.result&&t.pick===m.result){pts+=t.pts;corr++;if(t.pts>best)best=t.pts}}});
   const isMe=un===CU?.username;
   document.getElementById('hist-title').innerHTML=isMe?'My <span class="g">History</span>':(u?.name||un)+"'s <span class=\"b\">History</span>";
   document.getElementById('hist-sub').textContent=MY_POOL.name+' · '+MY_COMP.name;
@@ -1322,9 +1092,9 @@ function renderBkt(){
 
 // ─── ADMIN ────────────────────────
 window.aTab=function(t,btn){
-  ['comps','add','imp','res','grps','bonus','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
+  ['comps','add','imp','res','grps','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
   document.querySelectorAll('#page-adm .tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  if(t==='res')renderResTab();if(t==='grps')renderGrpsAdmin();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();if(t==='bonus')renderBonusAdmin();if(t==='imp')renderLockedRounds();
+  if(t==='res')renderResTab();if(t==='grps')renderGrpsAdmin();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();
 };
 document.getElementById('ast').onchange=function(){document.getElementById('adf').style.display=this.value==='knockout'?'none':''};
 
@@ -1334,40 +1104,7 @@ function renderAdm(){
   renderCompsTab();
   renderUpcoming();
   renderResTab();
-  renderLockedRounds();
 }
-
-function renderLockedRounds(){
-  const el=document.getElementById('lockedRoundsList');
-  if(!el)return;
-  const comp=COMPS[adminComp];
-  if(!comp){el.innerHTML='<div class="emp"><p>No active comp</p></div>';return}
-  const matches=comp.matches?Object.values(comp.matches):[];
-  const rounds=[...new Set(matches.map(m=>m.round||'General'))].sort();
-  const locked=comp.lockedRounds||{};
-  if(!rounds.length){el.innerHTML='<div class="emp"><p style="font-size:12px">No matches imported yet</p></div>';return}
-  el.innerHTML=rounds.map(rn=>{
-    const matchCount=matches.filter(m=>(m.round||'General')===rn).length;
-    const isLocked=!!locked[rn.replace(/[.#$\[\]/]/g,'_')];
-    return`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line)">
-      <div><strong>${rn}</strong> <span style="color:var(--muted);font-size:11px;margin-left:6px">${matchCount} match${matchCount!==1?'es':''}</span>${isLocked?'<span class="bdg go" style="margin-left:6px">🔒 LOCKED</span>':''}</div>
-      <button class="btn ${isLocked?'bg-grn':'bgh'} bsm" onclick="toggleRoundLock('${rn.replace(/'/g,"\\'")}')">${isLocked?'Unlock':'Lock'}</button>
-    </div>`;
-  }).join('');
-}
-
-window.toggleRoundLock=async function(round){
-  if(!adminComp)return;
-  const comp=COMPS[adminComp];
-  const locked=comp.lockedRounds||{};
-  if(locked[round]){
-    await dr(`comps/${adminComp}/lockedRounds/${round.replace(/[.#$\[\]/]/g,'_')}`);
-    toast(round+' unlocked','info');
-  }else{
-    await ds(`comps/${adminComp}/lockedRounds/${round.replace(/[.#$\[\]/]/g,'_')}`,true);
-    toast(round+' locked','ok');
-  }
-};
 
 function renderCompsTab(){
   const sel=document.getElementById('adminCompSel');
@@ -1480,32 +1217,18 @@ window.refreshOdds=async function(){
     const data=await resp.json();
     if(!Array.isArray(data)||!data.length){hideOv();toast('No odds yet','info');return}
     const matches=comp.matches||{};
-    const lockedRounds=comp.lockedRounds||{};
-    let updated=0,skippedLocked=0;
+    let updated=0;
     for(const ev of data){
       const home=ev.home_team,away=ev.away_team;
       const match=Object.values(matches).find(m=>m.home===home&&m.away===away);
       if(!match)continue;
-      // Skip if this match's round is locked (key is safe-encoded)
-      const safeRound=match.round?match.round.replace(/[.#$\[\]/]/g,'_'):'';
-      if(safeRound&&lockedRounds[safeRound]){skippedLocked++;continue}
       const bk=ev.bookmakers?.[0];if(!bk)continue;
       const market=bk.markets.find(m=>m.key==='h2h');if(!market)continue;
       let oh,od,oa;
       market.outcomes.forEach(o=>{if(o.name===home)oh=o.price;else if(o.name===away)oa=o.price;else if(o.name==='Draw')od=o.price});
-      if(oh&&oa){
-        const jitter=()=>1+(Math.random()*0.1-0.05);
-        const nH=Math.round(oh*jitter()*100)/100;
-        const nD=od?Math.round(od*jitter()*100)/100:null;
-        const nA=Math.round(oa*jitter()*100)/100;
-        await du(`comps/${adminComp}/matches/${match.id}`,{oddsH:oh,oddsD:od||oh,oddsA:oa,noisyH:nH,noisyD:nD,noisyA:nA});
-        updated++;
-      }
+      if(oh&&oa){await du(`comps/${adminComp}/matches/${match.id}`,{oddsH:oh,oddsD:od||oh,oddsA:oa});updated++}
     }
-    hideOv();
-    let msg=`Odds refreshed for ${updated} matches`;
-    if(skippedLocked>0)msg+=` (${skippedLocked} skipped — locked rounds)`;
-    toast(msg,'ok');
+    hideOv();toast(`Odds refreshed for ${updated} matches`,'ok');
   }catch(e){hideOv();toast('Refresh failed: '+e.message,'err')}
 };
 
@@ -1552,7 +1275,7 @@ function renderUpcoming(){
   el.innerHTML=up.slice(0,30).map(m=>`<div class="amr">
     <div class="amt">${tF(m.home)} ${m.home} vs ${m.away} ${tF(m.away)}</div>
     <div class="amm">${m.round||''} · ${fmtL(m.datetime)}${m.venue?' · '+m.venue:''}</div>
-    <div class="aod">H: <span>${m.oddsH?(+m.oddsH).toFixed(2):'TBC'}</span> · D: <span>${m.oddsD?(+m.oddsD).toFixed(2):'TBC'}</span> · A: <span>${m.oddsA?(+m.oddsA).toFixed(2):'TBC'}</span>${m.noisyH?` <span style="color:var(--muted2)">·  noisy: ${(+m.noisyH).toFixed(2)}/${m.noisyD?(+m.noisyD).toFixed(2):'-'}/${(+m.noisyA).toFixed(2)}</span>`:''}</div>
+    <div class="aod">H: <span>${m.oddsH?(+m.oddsH).toFixed(2):'TBC'}</span> · D: <span>${m.oddsD?(+m.oddsD).toFixed(2):'TBC'}</span> · A: <span>${m.oddsA?(+m.oddsA).toFixed(2):'TBC'}</span></div>
     <div style="display:flex;gap:7px;flex-wrap:wrap">
       <button class="btn bgh bsm" onclick="setOdds('${m.id}')">💰 Set Odds</button>
       <button class="btn bd bsm" onclick="delMatch('${m.id}')">🗑 Delete</button>
@@ -1645,159 +1368,6 @@ window.adminResetPw=async function(email){
   showC('Reset Password?','Send reset email to '+email+'?',async()=>{
     try{await sendPasswordResetEmail(auth,email);toast('Reset sent','ok')}catch(e){toast('Error: '+e.message,'err')}
   },false);
-};
-
-// ─── BONUS ADMIN ────────────────────────
-function renderBonusAdmin(){
-  if(!CU?.isAdmin||!adminComp)return;
-  const comp=COMPS[adminComp];if(!comp)return;
-  const winnerOdds=comp.winnerOdds||{};
-  const scorerOdds=comp.scorerOdds||{};
-
-  // Winner list
-  const wList=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
-  document.getElementById('winner-odds-list').innerHTML=wList.length?wList.map(([t,o])=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
-      <span><strong>${tF(t)} ${t}</strong></span>
-      <span style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-weight:600">${(+o).toFixed(2)}</span><span class="bdg gr">${bonusPickPts(o)} pts</span><button class="btn bgh bsm" onclick="delWinnerOdds('${t.replace(/'/g,"\\'")}')">×</button></span>
-    </div>`).join(''):'<div class="emp"><p>No teams added yet</p></div>';
-
-  // Result dropdown
-  const wSel=document.getElementById('aw-result');
-  wSel.innerHTML='<option value="">Select winner...</option>'+wList.map(([t])=>`<option value="${t}" ${comp.tournamentWinner===t?'selected':''}>${t}</option>`).join('');
-  document.getElementById('aw-current').textContent=comp.tournamentWinner?'Locked: '+comp.tournamentWinner:'Not yet set';
-
-  // Scorer list
-  const sList=Object.entries(scorerOdds).sort((a,b)=>a[1]-b[1]);
-  document.getElementById('scorer-odds-list').innerHTML=sList.length?sList.map(([p,o])=>`
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)">
-      <span><strong>⚽ ${p}</strong></span>
-      <span style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-weight:600">${(+o).toFixed(2)}</span><span class="bdg gr">${bonusPickPts(o)} pts</span><button class="btn bgh bsm" onclick="delScorerOdds('${p.replace(/'/g,"\\'")}')">×</button></span>
-    </div>`).join(''):'<div class="emp"><p>No players added yet</p></div>';
-
-  const sSel=document.getElementById('as-result');
-  sSel.innerHTML='<option value="">Select scorer...</option>'+sList.map(([p])=>`<option value="${p}" ${comp.topScorer===p?'selected':''}>${p}</option>`).join('');
-  document.getElementById('as-current').textContent=comp.topScorer?'Locked: '+comp.topScorer:'Not yet set';
-}
-
-function safeKey(s){return s.replace(/[.#$\[\]/]/g,'_')}
-
-window.addWinnerOdds=async function(){
-  const team=document.getElementById('aw-team').value.trim();
-  const odds=parseFloat(document.getElementById('aw-odds').value);
-  if(!team||isNaN(odds)||odds<1.01){toast('Fill in team and valid odds','err');return}
-  await ds(`comps/${adminComp}/winnerOdds/${safeKey(team)}`,odds);
-  document.getElementById('aw-team').value='';document.getElementById('aw-odds').value='';
-  toast(team+' added','ok');
-};
-window.delWinnerOdds=async function(team){
-  await dr(`comps/${adminComp}/winnerOdds/${safeKey(team)}`);toast('Removed','info');
-};
-window.addScorerOdds=async function(){
-  const player=document.getElementById('as-player').value.trim();
-  const odds=parseFloat(document.getElementById('as-odds').value);
-  if(!player||isNaN(odds)||odds<1.01){toast('Fill in player and valid odds','err');return}
-  await ds(`comps/${adminComp}/scorerOdds/${safeKey(player)}`,odds);
-  document.getElementById('as-player').value='';document.getElementById('as-odds').value='';
-  toast(player+' added','ok');
-};
-window.delScorerOdds=async function(player){
-  await dr(`comps/${adminComp}/scorerOdds/${safeKey(player)}`);toast('Removed','info');
-};
-window.setTournamentWinner=async function(){
-  const winner=document.getElementById('aw-result').value;
-  if(!winner)return;
-  showC('Lock Winner?','Setting "'+winner+'" as tournament winner. Bonus points awarded to anyone who picked them.',async()=>{
-    await du('comps/'+adminComp,{tournamentWinner:winner});
-    // Stamp the odds onto each player's pick so it can be calculated later (already stored)
-    toast('Winner locked: '+winner,'ok');
-  });
-};
-window.setTopScorer=async function(){
-  const scorer=document.getElementById('as-result').value;
-  if(!scorer)return;
-  showC('Lock Top Scorer?','Setting "'+scorer+'" as top scorer. Bonus points awarded to anyone who picked them.',async()=>{
-    await du('comps/'+adminComp,{topScorer:scorer});
-    toast('Scorer locked: '+scorer,'ok');
-  });
-};
-
-// ─── BONUSES PAGE (player-facing) ────────────────────────
-function renderBonuses(){
-  if(!MY_POOL||!MY_COMP){document.getElementById('bonuses-content').innerHTML='<div class="emp"><p>Select a pool</p></div>';return}
-  const b=MY_POOL.bonuses||{};
-  const ex=getMyExtras();
-  document.getElementById('bonuses-sub').textContent=MY_POOL.name+' · '+MY_COMP.name;
-  // Has tournament started?
-  const matches=MY_COMP.matches?Object.values(MY_COMP.matches):[];
-  const started=matches.some(m=>isLk(m));
-  const winnerOdds=MY_COMP.winnerOdds||{};
-  const scorerOdds=MY_COMP.scorerOdds||{};
-  let html='';
-
-  if(b.joker){
-    const jokerMatch=ex.jokerMatchId?MY_COMP.matches?.[ex.jokerMatchId]:null;
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">🎴 Joker (Double Points)</div>
-      ${jokerMatch?`<p style="font-size:13px;margin-bottom:8px">Currently played on: <strong>${jokerMatch.home} vs ${jokerMatch.away}</strong> (${fmtL(jokerMatch.datetime)})</p><button class="btn bgh bsm" onclick="removeJoker()" ${isLk(jokerMatch)?'disabled':''}>${isLk(jokerMatch)?'🔒 Locked':'Remove Joker'}</button>`:`<p style="font-size:13px;color:var(--muted)">Pick any match from the Tips page to play your joker.</p>`}
-    </div>`;
-  }
-  if(b.koMult){
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">📈 Knockout Multiplier (Active)</div>
-      <p style="font-size:13px;color:var(--muted)">Group: <strong>1×</strong> · R32–QF: <strong>1.5×</strong> · Semis: <strong>2×</strong> · Final: <strong>3×</strong></p>
-      <p style="font-size:12px;color:var(--muted2);margin-top:6px">Multipliers stack with Joker.</p>
-    </div>`;
-  }
-  if(b.winner){
-    const wList=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">🏆 Tournament Winner</div>
-      ${started?`<p style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px">🔒 Locked — tournament has started</p>`:`<p style="font-size:12px;color:var(--muted);margin-bottom:8px">Locks at first kick-off. Bonus = decimal odds × 50.</p>`}
-      ${ex.winner?`<p style="font-size:14px;margin-bottom:10px">Your pick: <strong>${tF(ex.winner)} ${ex.winner}</strong> · <span class="bdg gr">${bonusPickPts(ex.winnerOdds)} pts if correct</span></p>`:''}
-      ${!started&&wList.length?(()=>{
-        // Normalise probabilities across all teams
-        const totalInv=wList.reduce((s,[,o])=>s+1/o,0);
-        const norm=Object.fromEntries(wList.map(([t,o])=>[t,Math.round((1/o/totalInv)*100)]));
-        return `<select id="winner-pick" style="margin-bottom:10px"><option value="">Select team...</option>${wList.map(([t,o])=>`<option value="${t}" data-odds="${o}" ${ex.winner===t?'selected':''}>${tF(t)} ${t} · ${norm[t]}% chance · ${bonusPickPts(o)} pts</option>`).join('')}</select><button class="btn bg-grn bsm" onclick="confirmWinnerPick()">Save Pick</button>`;
-      })():''}
-      ${!wList.length?'<p style="font-size:12px;color:var(--muted)">No teams added yet.</p>':''}
-    </div>`;
-  }
-  if(b.scorer){
-    const sList=Object.entries(scorerOdds).sort((a,b)=>a[1]-b[1]);
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">⚽ Top Scorer</div>
-      ${started?`<p style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px">🔒 Locked — tournament has started</p>`:`<p style="font-size:12px;color:var(--muted);margin-bottom:8px">Locks at first kick-off. Bonus = decimal odds × 50.</p>`}
-      ${ex.scorer?`<p style="font-size:14px;margin-bottom:10px">Your pick: <strong>⚽ ${ex.scorer}</strong> · <span class="bdg gr">${bonusPickPts(ex.scorerOdds)} pts if correct</span></p>`:''}
-      ${!started&&sList.length?(()=>{
-        const totalInv=sList.reduce((s,[,o])=>s+1/o,0);
-        const norm=Object.fromEntries(sList.map(([p,o])=>[p,Math.round((1/o/totalInv)*100)]));
-        return `<select id="scorer-pick" style="margin-bottom:10px"><option value="">Select player...</option>${sList.map(([p,o])=>`<option value="${p}" data-odds="${o}" ${ex.scorer===p?'selected':''}>⚽ ${p} · ${norm[p]}% chance · ${bonusPickPts(o)} pts</option>`).join('')}</select><button class="btn bg-grn bsm" onclick="confirmScorerPick()">Save Pick</button>`;
-      })():''}
-      ${!sList.length?'<p style="font-size:12px;color:var(--muted)">No players added yet.</p>':''}
-    </div>`;
-  }
-
-  if(!html)html='<div class="emp"><div class="ei">🎯</div><p>This pool has no bonus features enabled.</p></div>';
-  document.getElementById('bonuses-content').innerHTML=html;
-}
-
-window.confirmWinnerPick=async function(){
-  const sel=document.getElementById('winner-pick');
-  if(!sel||!sel.value)return;
-  const team=sel.value;
-  const odds=parseFloat(sel.options[sel.selectedIndex].dataset.odds);
-  await du(`extras/${CP}/${CU.username}`,{winner:team,winnerOdds:odds});
-  toast('Winner saved: '+team+' ('+bonusPickPts(odds)+' pts if correct)','ok');
-};
-window.confirmScorerPick=async function(){
-  const sel=document.getElementById('scorer-pick');
-  if(!sel||!sel.value)return;
-  const player=sel.value;
-  const odds=parseFloat(sel.options[sel.selectedIndex].dataset.odds);
-  await du(`extras/${CP}/${CU.username}`,{scorer:player,scorerOdds:odds});
-  toast('Scorer saved: '+player+' ('+bonusPickPts(odds)+' pts if correct)','ok');
 };
 
 // ─── AUTH STATE ────────────────────────
