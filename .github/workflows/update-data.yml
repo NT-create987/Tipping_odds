@@ -164,6 +164,7 @@ jobs:
 
               // AUTO-LOCK rounds within 7 days
               if (comp.matches) {
+                const manuallyUnlocked = comp.manuallyUnlockedRounds || {};
                 const earliestByRound = {};
                 Object.values(comp.matches).forEach(m => {
                   if (!m.round || !m.datetime) return;
@@ -177,6 +178,7 @@ jobs:
                 for (const [round, earliest] of Object.entries(earliestByRound)) {
                   const safeKey = round.replace(/[.#\$\[\]/]/g, '_');
                   if (lockedRounds[safeKey]) continue;
+                  if (manuallyUnlocked[safeKey]) continue; // respect admin's override
                   if (earliest - now <= SEVEN && earliest > now - SEVEN) {
                     await fbPatch('comps/' + compId + '/lockedRounds', { [safeKey]: true });
                     lockedCount++;
