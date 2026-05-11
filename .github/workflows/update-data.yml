@@ -223,7 +223,10 @@ jobs:
                         else if (scoreA > scoreH) result = 'A';
                         else result = 'D';
                       }
-                      if (!existing) {
+                      if (existing && existing.result) {
+                        // Already finished — never re-fetch
+                        skipped++;
+                      } else if (!existing) {
                         // Brand new match — full insert
                         await fbPatch('comps/' + compId + '/matches/' + apiId, {
                           id: apiId, apiId, home, away, datetime: localDt, venue, round, stage,
