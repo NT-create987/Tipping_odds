@@ -767,7 +767,7 @@ function fmtV(dt,v){if(!dt||!v)return'';const vm={'new york':'America/New_York',
 let tt2;window.toast=function(msg,type='info'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(tt2);tt2=setTimeout(()=>el.className='',3500)};
 let ccb=null;
 window.closeC=function(){document.getElementById('cdlg').classList.remove('show');ccb=null};
-document.getElementById('cok').onclick=()=>{closeC();if(ccb)ccb()};
+document.getElementById('cok').onclick=()=>{const cb=ccb;document.getElementById('cdlg').classList.remove('show');ccb=null;if(cb)cb()};
 function showC(t,m,cb,d=true){document.getElementById('ct').textContent=t;document.getElementById('cm').textContent=m;const b=document.getElementById('cok');b.className='btn '+(d?'bd':'bp');ccb=cb;document.getElementById('cdlg').classList.add('show')}
 function showOv(){document.getElementById('ov').classList.add('show')}
 function hideOv(){document.getElementById('ov').classList.remove('show')}
