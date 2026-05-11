@@ -54,38 +54,90 @@ jobs:
                     const oddsData = await oddsResp.json();
                     const matches = comp.matches || {};
                     let oddsUpdated = 0, oddsSkipped = 0;
-                    // Helper: normalise team names for fuzzy matching
-                    // Strips common suffixes and lowercases for comparison
-                    const normaliseTeam = name => {
+                    const unmatched = [];
+
+                    // === FUZZY TEAM NAME MATCHING ===
+                    // Stop words that should be removed before comparison
+                    const STOP = new Set(['fc','afc','cf','sc','ac','club','football','soccer','the','&','and','de','del','la','el','los','las','y','f.c.','c.f.','s.c.']);
+                    // Common aliases — bidirectional. Reduces both forms to the same key.
+                    const ALIASES = {
+                      'wolverhampton wanderers': 'wolves',
+                      'tottenham hotspur': 'tottenham',
+                      'newcastle united': 'newcastle',
+                      'west ham united': 'west ham',
+                      'leeds united': 'leeds',
+                      'brighton hove albion': 'brighton',
+                      'brighton hove': 'brighton',
+                      'nottingham forest': 'forest',
+                      'manchester united': 'man united',
+                      'manchester city': 'man city',
+                      'sheffield united': 'sheff united',
+                      'sheffield wednesday': 'sheff wednesday',
+                      'crystal palace': 'palace',
+                      'leicester city': 'leicester',
+                      'norwich city': 'norwich',
+                      'cardiff city': 'cardiff',
+                      'swansea city': 'swansea',
+                      'bayern munich': 'bayern',
+                      'borussia dortmund': 'dortmund',
+                      'paris saint germain': 'psg',
+                      'paris saint-germain': 'psg',
+                      'real madrid': 'madrid real',
+                      'atletico madrid': 'madrid atletico',
+                      'atletico de madrid': 'madrid atletico',
+                      'inter milan': 'inter',
+                      'internazionale': 'inter',
+                      'ac milan': 'milan'
+                    };
+                    function normalise(name) {
                       if (!name) return '';
-                      return name.toLowerCase()
-                        .replace(/\\s+(fc|cf|sc|afc|football club|f\\.c\\.)\\b/g, '')
-                        .replace(/\\bmanchester\\s+/g, 'man ')
-                        .replace(/\\bwolverhampton\\s+wanderers/g, 'wolves')
-                        .replace(/\\btottenham\\s+hotspur/g, 'tottenham')
-                        .replace(/\\bnewcastle\\s+united/g, 'newcastle')
-                        .replace(/\\bwest\\s+ham\\s+united/g, 'west ham')
-                        .replace(/\\bbrighton\\s+(&|and)\\s+hove\\s+albion/g, 'brighton')
-                        .replace(/\\bnottingham\\s+forest/g, 'forest')
-                        .replace(/\\bsheffield\\s+united/g, 'sheff united')
-                        .replace(/\\bcrystal\\s+palace/g, 'palace')
-                        .replace(/[^a-z0-9 ]/g, '')
+                      let s = name.toLowerCase()
+                        .replace(/[\\.\\-_,]/g, ' ')
+                        .replace(/[^\\w\\s]/g, '')
                         .replace(/\\s+/g, ' ')
                         .trim();
-                    };
+                      // Apply aliases
+                      for (const [from, to] of Object.entries(ALIASES)) {
+                        if (s.includes(from)) { s = s.replace(from, to); break; }
+                      }
+                      // Remove stop words
+                      return s.split(' ').filter(w => w && !STOP.has(w)).join(' ');
+                    }
+                    function tokens(name) {
+                      const n = normalise(name);
+                      return new Set(n.split(' ').filter(Boolean));
+                    }
+                    function similarity(a, b) {
+                      const ta = tokens(a), tb = tokens(b);
+                      if (!ta.size || !tb.size) return 0;
+                      let shared = 0;
+                      for (const t of ta) if (tb.has(t)) shared++;
+                      return shared / Math.max(ta.size, tb.size);
+                    }
+                    function findBestMatch(oddsHome, oddsAway, existingMatches) {
+                      let bestId = null, bestScore = 0;
+                      for (const [id, m] of Object.entries(existingMatches)) {
+                        if (m.result) continue; // skip finished
+                        const homeScore = similarity(oddsHome, m.home);
+                        const awayScore = similarity(oddsAway, m.away);
+                        const combined = (homeScore + awayScore) / 2;
+                        if (combined > bestScore && homeScore >= 0.5 && awayScore >= 0.5) {
+                          bestScore = combined;
+                          bestId = id;
+                        }
+                      }
+                      return bestId;
+                    }
+                    // ================================
+
                     for (const ev of (oddsData || [])) {
                       const home = ev.home_team, away = ev.away_team;
-                      const nh = normaliseTeam(home), na = normaliseTeam(away);
-                      // Try exact match first, then fuzzy
-                      let matchEntry = Object.entries(matches).find(([_, m]) => m.home === home && m.away === away);
-                      if (!matchEntry) {
-                        matchEntry = Object.entries(matches).find(([_, m]) => normaliseTeam(m.home) === nh && normaliseTeam(m.away) === na);
-                      }
-                      if (!matchEntry) {
-                        console.log('  No match for: ' + home + ' vs ' + away);
+                      const matchId = findBestMatch(home, away, matches);
+                      if (!matchId) {
+                        unmatched.push(home + ' vs ' + away);
                         continue;
                       }
-                      const [matchId, match] = matchEntry;
+                      const match = matches[matchId];
                       const safeRound = match.round ? match.round.replace(/[.#\$\[\]/]/g, '_') : '';
                       if (safeRound && lockedRounds[safeRound]) { oddsSkipped++; continue; }
                       const bk = (ev.bookmakers || [])[0];
@@ -93,9 +145,10 @@ jobs:
                       const market = (bk.markets || []).find(m => m.key === 'h2h');
                       if (!market) continue;
                       let oh, od, oa;
+                      // Match outcome names to home/away using same fuzzy logic
                       market.outcomes.forEach(o => {
-                        if (o.name === home) oh = o.price;
-                        else if (o.name === away) oa = o.price;
+                        if (similarity(o.name, match.home) >= 0.5) oh = o.price;
+                        else if (similarity(o.name, match.away) >= 0.5) oa = o.price;
                         else if (o.name === 'Draw') od = o.price;
                       });
                       if (oh && oa) {
@@ -109,7 +162,11 @@ jobs:
                         oddsUpdated++;
                       }
                     }
-                    console.log('  Odds: ' + oddsUpdated + ' updated, ' + oddsSkipped + ' locked');
+                    console.log('  Odds: ' + oddsUpdated + ' updated, ' + oddsSkipped + ' locked, ' + unmatched.length + ' unmatched');
+                    if (unmatched.length) {
+                      console.log('  Unmatched events (first 5):');
+                      unmatched.slice(0, 5).forEach(u => console.log('    - ' + u));
+                    }
                   } else {
                     const errText = await oddsResp.text();
                     if (errText.includes('UNKNOWN_SPORT')) console.log('  Odds: not in season yet');
