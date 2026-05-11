@@ -960,6 +960,7 @@ function renderMyPools(){
     const memCount=Object.keys(p.members||{}).length;
     const isOwner=p.ownerId===CU.username;
     const isCurrent=p.id===CP;
+    const isOrphan=!COMPS[p.compId];
     const memberList=Object.keys(p.members||{});
     const avatars=memberList.slice(0,6).map(un=>{
       const u=USERS[un];const ini=(u?.name||un).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
@@ -967,9 +968,9 @@ function renderMyPools(){
       return`<div title="${u?.name||un}" style="width:28px;height:28px;border-radius:50%;background:${isMe?'var(--green)':'var(--paper2)'};border:2px solid var(--paper);color:${isMe?'#fff':'var(--ink2)'};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'Archivo Black',sans-serif;margin-left:-6px">${ini}</div>`;
     }).join('');
     const moreCount=memberList.length-6;
-    return`<div class="poolCard ${isCurrent?'active':''}" onclick="selectPoolFromList('${p.id}')">
+    return`<div class="poolCard ${isCurrent?'active':''}" onclick="selectPoolFromList('${p.id}')" style="${isOrphan?'border-color:var(--red)':''}">
       <div class="poolInfo" style="flex:1">
-        <h4>${p.name}${isCurrent?' <span style="color:var(--green);font-size:11px">● ACTIVE</span>':''}</h4>
+        <h4>${p.name}${isCurrent?' <span style="color:var(--green);font-size:11px">● ACTIVE</span>':''}${isOrphan?' <span style="color:var(--red);font-size:11px">⚠ BROKEN</span>':''}</h4>
         <div class="meta">code <strong>${p.code}</strong>${isOwner?' · 👑 You own this':''}</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
           <div style="display:flex;padding-left:6px">${avatars}${moreCount>0?`<div style="width:28px;height:28px;border-radius:50%;background:var(--paper2);border:2px solid var(--paper);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-left:-6px">+${moreCount}</div>`:''}</div>
@@ -1108,10 +1109,16 @@ window.doDeletePool=function(){
 // ─── TIPS ────────────────────────
 function renderTips(){
   if(!CU)return;
-  if(!MY_POOL||!MY_COMP){
+  if(!MY_POOL){
     const myPools=getMyPools();
     if(!myPools.length){showPage('welcome');return}
     document.getElementById('tlist').innerHTML='<div class="emp"><div class="ei">🏆</div><p>Select a pool to start tipping</p></div>';
+    return;
+  }
+  if(!MY_COMP){
+    // Orphan pool — comp it was linked to has been deleted
+    document.getElementById('tlist').innerHTML=`<div class="emp"><div class="ei">⚠</div><p><strong>This pool is broken</strong><br>Its competition (${MY_POOL.compId}) no longer exists.<br><br>${MY_POOL.ownerId===CU.username?'You own this pool — delete it from My Pools and create a new one.':'Ask the pool owner to recreate it.'}</p></div>`;
+    document.getElementById('tips-rl').textContent=MY_POOL.name+' · ⚠ orphan';
     return;
   }
   document.getElementById('tips-rl').textContent=MY_POOL.name+' · '+MY_COMP.name;
@@ -1618,10 +1625,20 @@ window.createComp=async function(){
 };
 window.deleteComp=function(id){
   const c=COMPS[id];if(!c)return;
-  showC('Delete Comp?',`Remove "${c.name}" and all its matches? Pools using this comp will break. Cannot be undone.`,async()=>{
+  // Count pools that will be affected
+  const affectedPools=Object.values(POOLS).filter(p=>p.compId===id);
+  const poolWarning=affectedPools.length>0?` Will also delete ${affectedPools.length} pool${affectedPools.length>1?'s':''} that use it.`:'';
+  showC('Delete Comp?',`Remove "${c.name}" and all its matches?${poolWarning} Cannot be undone.`,async()=>{
     showOv();
     try{
-      // Delete child collections first, then parent
+      // Delete dependent pools first
+      for(const p of affectedPools){
+        await dr('pools/'+p.id);
+        await dr('tips/'+p.id);
+        await dr('extras/'+p.id);
+        delete POOLS[p.id];
+      }
+      // Delete child collections, then comp itself
       await dr(`comps/${id}/matches`);
       await dr(`comps/${id}/groups`);
       await dr(`comps/${id}/lockedRounds`);
@@ -1629,12 +1646,13 @@ window.deleteComp=function(id){
       await dr(`comps/${id}/winnerOdds`);
       await dr(`comps/${id}/scorerOdds`);
       await dr(`comps/${id}`);
-      // Clear local cache immediately so UI updates without waiting for listener
       delete COMPS[id];
       hideOv();
-      toast('Comp deleted','ok');
+      toast('Comp deleted'+(affectedPools.length?` + ${affectedPools.length} pool(s)`:''),'ok');
       if(adminComp===id)adminComp=Object.keys(COMPS)[0]||null;
+      if(CP&&!POOLS[CP]){CP=null;MY_POOL=null;MY_COMP=null}
       renderAdm();
+      renderPoolSelector();
     }catch(e){
       hideOv();
       toast('Delete failed: '+e.message,'err');
@@ -1699,31 +1717,72 @@ window.refreshOdds=async function(){
     if(!Array.isArray(data)||!data.length){hideOv();toast('No odds yet','info');return}
     const matches=comp.matches||{};
     const lockedRounds=comp.lockedRounds||{};
-    let updated=0,skippedLocked=0;
+
+    // === FUZZY MATCHING ===
+    const STOP=new Set(['fc','afc','cf','sc','ac','club','football','soccer','the','and','de','del','la','el']);
+    const ALIASES={
+      'wolverhampton wanderers':'wolves','tottenham hotspur':'tottenham',
+      'newcastle united':'newcastle','west ham united':'west ham',
+      'leeds united':'leeds','brighton hove albion':'brighton','brighton hove':'brighton',
+      'nottingham forest':'forest','manchester united':'man united','manchester city':'man city',
+      'sheffield united':'sheff united','sheffield wednesday':'sheff wednesday',
+      'crystal palace':'palace','leicester city':'leicester','norwich city':'norwich',
+      'cardiff city':'cardiff','swansea city':'swansea','bayern munich':'bayern',
+      'borussia dortmund':'dortmund','paris saint germain':'psg','paris saint-germain':'psg',
+      'real madrid':'madrid real','atletico madrid':'madrid atletico','atletico de madrid':'madrid atletico',
+      'inter milan':'inter','internazionale':'inter','ac milan':'milan'
+    };
+    function normalise(name){
+      if(!name)return'';
+      let s=name.toLowerCase().replace(/[.\-_,]/g,' ').replace(/[^\w\s]/g,'').replace(/\s+/g,' ').trim();
+      for(const[from,to]of Object.entries(ALIASES)){if(s.includes(from)){s=s.replace(from,to);break}}
+      return s.split(' ').filter(w=>w&&!STOP.has(w)).join(' ');
+    }
+    function tokens(n){return new Set(normalise(n).split(' ').filter(Boolean))}
+    function sim(a,b){const ta=tokens(a),tb=tokens(b);if(!ta.size||!tb.size)return 0;let s=0;for(const t of ta)if(tb.has(t))s++;return s/Math.max(ta.size,tb.size)}
+    function findBest(oh,oa,ms){
+      let bestId=null,bestScore=0;
+      for(const[id,m]of Object.entries(ms)){
+        if(m.result)continue;
+        const hS=sim(oh,m.home),aS=sim(oa,m.away);
+        const c=(hS+aS)/2;
+        if(c>bestScore&&hS>=0.5&&aS>=0.5){bestScore=c;bestId=id}
+      }
+      return bestId;
+    }
+    // ======================
+
+    let updated=0,skippedLocked=0,unmatched=[];
     for(const ev of data){
       const home=ev.home_team,away=ev.away_team;
-      const match=Object.values(matches).find(m=>m.home===home&&m.away===away);
-      if(!match)continue;
-      // Skip if this match's round is locked (key is safe-encoded)
+      const matchId=findBest(home,away,matches);
+      if(!matchId){unmatched.push(home+' vs '+away);continue}
+      const match=matches[matchId];
       const safeRound=match.round?match.round.replace(/[.#$\[\]/]/g,'_'):'';
       if(safeRound&&lockedRounds[safeRound]){skippedLocked++;continue}
       const bk=ev.bookmakers?.[0];if(!bk)continue;
       const market=bk.markets.find(m=>m.key==='h2h');if(!market)continue;
       let oh,od,oa;
-      market.outcomes.forEach(o=>{if(o.name===home)oh=o.price;else if(o.name===away)oa=o.price;else if(o.name==='Draw')od=o.price});
+      market.outcomes.forEach(o=>{
+        if(sim(o.name,match.home)>=0.5)oh=o.price;
+        else if(sim(o.name,match.away)>=0.5)oa=o.price;
+        else if(o.name==='Draw')od=o.price;
+      });
       if(oh&&oa){
         const jitter=()=>1+(Math.random()*0.1-0.05);
         const nH=Math.round(oh*jitter()*100)/100;
         const nD=od?Math.round(od*jitter()*100)/100:null;
         const nA=Math.round(oa*jitter()*100)/100;
-        await du(`comps/${adminComp}/matches/${match.id}`,{oddsH:oh,oddsD:od||oh,oddsA:oa,noisyH:nH,noisyD:nD,noisyA:nA});
+        await du(`comps/${adminComp}/matches/${matchId}`,{oddsH:oh,oddsD:od||oh,oddsA:oa,noisyH:nH,noisyD:nD,noisyA:nA});
         updated++;
       }
     }
     hideOv();
     let msg=`Odds refreshed for ${updated} matches`;
     if(skippedLocked>0)msg+=` (${skippedLocked} skipped — locked rounds)`;
+    if(unmatched.length>0)msg+=` · ${unmatched.length} unmatched`;
     toast(msg,'ok');
+    if(unmatched.length>0)console.log('Unmatched events:',unmatched);
   }catch(e){hideOv();toast('Refresh failed: '+e.message,'err')}
 };
 
