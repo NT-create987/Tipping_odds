@@ -94,6 +94,9 @@ body>*{position:relative;z-index:1}
 .sval.bl{color:var(--blue)}.sval.gr{color:var(--green)}
 
 .trow{display:flex;gap:0;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.trow.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
+.trow.scroll::-webkit-scrollbar{height:4px}
+.trow.scroll .tp{white-space:nowrap;flex-shrink:0}
 .tp{padding:8px 18px;font-size:13px;border:none;background:none;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Archivo',sans-serif;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-2px}
 .tp.active{color:var(--green);border-bottom-color:var(--green)}
 .tp:hover:not(.active){color:var(--ink)}
@@ -261,6 +264,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
       <button class="nb" id="nv-lb" onclick="showPage('lb')">Leaderboard</button>
       <button class="nb" id="nv-grp" onclick="showPage('grp')">Groups</button>
       <button class="nb" id="nv-bkt" onclick="showPage('bkt')">Bracket</button>
+      <button class="nb" id="nv-stand" onclick="showPage('stand')">Standings</button>
       <button class="nb" id="nv-hist" onclick="showPage('hist')">History</button>
       <button class="nb" id="nv-bonuses" onclick="showPage('bonuses')" style="display:none">Bonuses</button>
       <button class="nb" id="nv-pools" onclick="showPage('pools')">My Pools</button>
@@ -502,6 +506,16 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
 </div>
 
 
+<!-- STANDINGS (league mode) -->
+<div class="page" id="page-stand">
+  <div class="ptitle">League <span class="g">Table</span></div>
+  <div class="psub" id="stand-sub">Auto-updated as results come in.</div>
+  <div class="card" style="overflow-x:auto;padding:0">
+    <table class="lbt" id="stand-table"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+    <tbody id="stand-body"></tbody></table>
+  </div>
+</div>
+
 <!-- BONUSES -->
 <div class="page" id="page-bonuses">
   <div class="ptitle">Bonus <span class="g">Picks</span></div>
@@ -518,7 +532,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <button class="tp" onclick="aTab('add',this)">Add Match</button>
     <button class="tp" onclick="aTab('imp',this)">Import API</button>
     <button class="tp" onclick="aTab('res',this)">Results</button>
-    <button class="tp" onclick="aTab('grps',this)">Groups</button>
+    <button class="tp" id="atab-grps" onclick="aTab('grps',this)">Groups</button>
     <button class="tp" onclick="aTab('bonus',this)">Bonus Setup</button>
     <button class="tp" onclick="aTab('plyr',this)">All Players</button>
   </div>
@@ -604,7 +618,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   <div id="at-bonus" style="display:none">
     <div class="ibox">Set tournament-winner odds for each team and the top-scorer odds for each player. These power the Bonus Picks for any pool that uses them.</div>
     <div class="card" style="margin-bottom:16px">
-      <div class="slabel">🏆 Tournament Winner Odds (per team)</div>
+      <div class="slabel">🏆 Overall Winner Odds (per team)</div>
       <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Add each team with their pre-tournament outright odds. Used to calculate winner-pick bonus.</p>
       <div class="fr">
         <div class="fld"><label>Team</label><input type="text" id="aw-team" placeholder="e.g. Brazil"></div>
@@ -660,12 +674,24 @@ const GH_TOKEN=null;
 
 // Comp presets — admin can choose from these when creating a comp
 const COMP_PRESETS={
-  wc26:{name:'World Cup 2026',fdCode:'WC',fdSeason:2026,oddsKey:'soccer_fifa_world_cup',hasGroups:true,hasBracket:true},
-  ucl25:{name:'Champions League 2025/26',fdCode:'CL',fdSeason:2025,oddsKey:'soccer_uefa_champs_league',hasGroups:false,hasBracket:true},
-  ucl26:{name:'Champions League 2026/27',fdCode:'CL',fdSeason:2026,oddsKey:'soccer_uefa_champs_league',hasGroups:false,hasBracket:true},
-  epl25:{name:'EPL 2025/26',fdCode:'PL',fdSeason:2025,oddsKey:'soccer_epl',hasGroups:false,hasBracket:false},
-  epl26:{name:'EPL 2026/27',fdCode:'PL',fdSeason:2026,oddsKey:'soccer_epl',hasGroups:false,hasBracket:false}
+  // compType: 'league' = matchdays + standings table (EPL, La Liga etc)
+  //           'tournament' = group stage + bracket (World Cup, UCL etc)
+  wc26:{name:'World Cup 2026',compType:'tournament',fdCode:'WC',fdSeason:2026,oddsKey:'soccer_fifa_world_cup',hasGroups:true,hasBracket:true},
+  ucl25:{name:'Champions League 2025/26',compType:'tournament',fdCode:'CL',fdSeason:2025,oddsKey:'soccer_uefa_champs_league',hasGroups:false,hasBracket:true},
+  ucl26:{name:'Champions League 2026/27',compType:'tournament',fdCode:'CL',fdSeason:2026,oddsKey:'soccer_uefa_champs_league',hasGroups:false,hasBracket:true},
+  epl25:{name:'EPL 2025/26',compType:'league',fdCode:'PL',fdSeason:2025,oddsKey:'soccer_epl',hasGroups:false,hasBracket:false},
+  epl26:{name:'EPL 2026/27',compType:'league',fdCode:'PL',fdSeason:2026,oddsKey:'soccer_epl',hasGroups:false,hasBracket:false},
+  laliga25:{name:'La Liga 2025/26',compType:'league',fdCode:'PD',fdSeason:2025,oddsKey:'soccer_spain_la_liga',hasGroups:false,hasBracket:false},
+  seriea25:{name:'Serie A 2025/26',compType:'league',fdCode:'SA',fdSeason:2025,oddsKey:'soccer_italy_serie_a',hasGroups:false,hasBracket:false},
+  bundesliga25:{name:'Bundesliga 2025/26',compType:'league',fdCode:'BL1',fdSeason:2025,oddsKey:'soccer_germany_bundesliga',hasGroups:false,hasBracket:false}
 };
+// Helper: returns 'league' or 'tournament' for any comp, with fallback
+function compTypeOf(comp){
+  if(!comp)return'league';
+  if(comp.compType)return comp.compType;
+  // Legacy fallback: infer from hasGroups
+  return comp.hasGroups?'tournament':'league';
+}
 
 const app2=initializeApp(FC);
 const db=getDatabase(app2);
@@ -741,10 +767,15 @@ function tipPoints(match,tip,pool,extras){
   if(!tip||!match.result||tip.pick!==match.result)return 0;
   let pts=calcMatchPts(match,tip.pick,pool);
   if(pool?.bonuses?.koMult&&match.stage==='knockout')pts*=koMultiplier(match.round);
-  // Joker: per-round, group-stage only
-  if(pool?.bonuses?.joker&&match.stage==='group'){
-    const rk=safeRoundKey(match.round);
-    if(rk&&extras?.jokerByRound?.[rk]===match.id)pts*=2;
+  // Joker: applies in any round for leagues; group-stage only for tournaments
+  if(pool?.bonuses?.joker){
+    const comp=COMPS[pool.compId];
+    const ct=compTypeOf(comp);
+    const eligible=(ct==='league')||(ct==='tournament'&&match.stage==='group');
+    if(eligible){
+      const rk=safeRoundKey(match.round);
+      if(rk&&extras?.jokerByRound?.[rk]===match.id)pts*=2;
+    }
   }
   return Math.round(pts);
 }
@@ -785,6 +816,7 @@ window.showPage=function(id){
   if(id==='bkt')renderBkt();
   if(id==='hist')renderHist(CU?.username);
   if(id==='bonuses')renderBonuses();
+  if(id==='stand')renderStandings();
   if(id==='pools')renderMyPools();
   if(id==='createPool')renderCreatePoolForm();
   if(id==='adm')renderAdm();
@@ -894,7 +926,18 @@ window.doForgot=async function(){
 
 // ─── LISTENERS ────────────────────────
 function startListeners(){
-  dl('comps',v=>{COMPS=v||{};refreshContext();refreshAllPages()});
+  dl('comps',v=>{
+    COMPS=v||{};
+    // Auto-migrate: backfill compType for old comps (don't write back, just set local)
+    Object.values(COMPS).forEach(c=>{
+      if(!c.compType){
+        // Derive from preset key or hasGroups
+        const preset=c.type?COMP_PRESETS[c.type]:null;
+        c.compType=preset?.compType||(c.hasGroups?'tournament':'league');
+      }
+    });
+    refreshContext();refreshAllPages();
+  });
   dl('pools',v=>{POOLS=v||{};refreshContext();refreshAllPages()});
   dl('users',v=>{USERS=v||{};if(['lb','adm','managePool'].includes(curPage))refreshAllPages()});
 }
@@ -911,9 +954,11 @@ function refreshContext(){
   // Show/hide Bonuses nav button
   const showBonuses=MY_POOL?.bonuses&&Object.values(MY_POOL.bonuses).some(v=>v);
   document.getElementById('nv-bonuses').style.display=showBonuses?'':'none';
-  // Show/hide Groups and Bracket based on the comp type
-  document.getElementById('nv-grp').style.display=MY_COMP?.hasGroups?'':'none';
-  document.getElementById('nv-bkt').style.display=MY_COMP?.hasBracket?'':'none';
+  // Show/hide nav based on comp type
+  const ct=compTypeOf(MY_COMP);
+  document.getElementById('nv-grp').style.display=(ct==='tournament'&&MY_COMP?.hasGroups)?'':'none';
+  document.getElementById('nv-bkt').style.display=(ct==='tournament'&&MY_COMP?.hasBracket)?'':'none';
+  document.getElementById('nv-stand').style.display=ct==='league'?'':'none';
   renderPoolSelector();
 
   // If on welcome page but pools exist, redirect
@@ -932,6 +977,7 @@ function refreshAllPages(){
   if(curPage==='adm')renderAdm();
   if(curPage==='managePool')renderManagePool();
   if(curPage==='bonuses')renderBonuses();
+  if(curPage==='stand')renderStandings();
   if(curPage==='createPool')renderCreatePoolForm();
 }
 
@@ -1019,7 +1065,25 @@ function renderCreatePoolForm(){
   const sel=document.getElementById('cpc');
   const compArr=Object.values(COMPS);
   if(!compArr.length){sel.innerHTML='<option value="">No competitions available yet</option>';return}
-  sel.innerHTML=compArr.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  sel.innerHTML=compArr.map(c=>`<option value="${c.id}">${c.name} (${compTypeOf(c)})</option>`).join('');
+  // Hide knockout multiplier toggle if first comp is a league
+  updateBonusOptionsForComp();
+  sel.onchange=()=>updateBonusOptionsForComp();
+}
+function updateBonusOptionsForComp(){
+  const sel=document.getElementById('cpc');if(!sel)return;
+  const compId=sel.value;
+  const comp=COMPS[compId];
+  const ct=compTypeOf(comp);
+  const koWrap=document.getElementById('bf-koMult-wrap');
+  if(koWrap){
+    if(ct==='league'){
+      koWrap.style.display='none';
+      const cb=document.getElementById('bf-koMult');if(cb)cb.checked=false;
+    }else{
+      koWrap.style.display='';
+    }
+  }
 }
 window.doCreatePool=async function(){
   const name=document.getElementById('cpn').value.trim();
@@ -1136,6 +1200,8 @@ function renderTips(){
   matches.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
   const rnds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
   const tabs=document.getElementById('ttabs');tabs.innerHTML='';
+  // Add 'scroll' class if many rounds (leagues with 38 matchdays)
+  if(rnds.length>8)tabs.classList.add('scroll');else tabs.classList.remove('scroll');
   if(rnds.length>1){
     // If no round selected yet, pick the one with the next upcoming match (or most recent if all in past)
     if(!curRnd||!rnds.includes(curRnd)){
@@ -1157,6 +1223,8 @@ function renderTips(){
       }
     }
     rnds.forEach(rv=>{const b=document.createElement('button');b.className='tp'+(curRnd===rv?' active':'');b.textContent=rv;b.onclick=()=>{curRnd=rv;renderTips()};tabs.appendChild(b)});
+    // Scroll the active tab into view
+    setTimeout(()=>{const a=tabs.querySelector('.tp.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
   }else curRnd=rnds[0]||null;
   const vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
   const el=document.getElementById('tlist');
@@ -1194,8 +1262,9 @@ function mCard(m,myTip){
   const tc=tippers.length;
   const memCount=Object.keys(MY_POOL.members||{}).length;
   const hasOdds=m.oddsH&&m.oddsH>=1.01;
-  // Joker info — per round, group stage only
-  const jokerOn=MY_POOL?.bonuses?.joker&&m.stage==='group';
+  // Joker info — per round, any round for leagues; group stage only for tournaments
+  const _ct=compTypeOf(MY_COMP);
+  const jokerOn=MY_POOL?.bonuses?.joker&&((_ct==='league')||(_ct==='tournament'&&m.stage==='group'));
   const myExtras=getMyExtras();
   const myJokers=myExtras.jokerByRound||{};
   const roundKey=safeRoundKey(m.round);
@@ -1293,7 +1362,9 @@ window.playJoker=async function(mid,roundKey){
   if(!CU||!CP||!roundKey)return;
   const m=MY_COMP?.matches?.[mid];
   if(!m||isLk(m)){toast('Match locked','err');return}
-  if(m.stage!=='group'){toast('Joker only works on group/regular season matches','err');return}
+  // For tournaments: only group-stage matches
+  const ct=compTypeOf(MY_COMP);
+  if(ct==='tournament'&&m.stage!=='group'){toast('Joker only works on group stage matches','err');return}
   const ex=getMyExtras();
   if(ex.jokerByRound?.[roundKey]){toast('Joker already played for this round','err');return}
   await ds(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`,mid);
@@ -1457,6 +1528,39 @@ function renderGrp(){
   }).join('');
 }
 
+// Build the standings table from match results (league mode)
+function renderStandings(){
+  if(!MY_COMP){document.getElementById('stand-body').innerHTML='';return}
+  document.getElementById('stand-sub').textContent=MY_POOL.name+' · '+MY_COMP.name+' — auto-calculated from results';
+  const matches=MY_COMP.matches?Object.values(MY_COMP.matches):[];
+  const completed=matches.filter(m=>m.result&&m.scoreH!=null&&m.scoreA!=null);
+  // Build team stats
+  const stats={};
+  function ensure(t){if(!stats[t])stats[t]={name:t,p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0}}
+  for(const m of completed){
+    ensure(m.home);ensure(m.away);
+    const sH=+m.scoreH,sA=+m.scoreA;
+    stats[m.home].p++;stats[m.away].p++;
+    stats[m.home].gf+=sH;stats[m.home].ga+=sA;
+    stats[m.away].gf+=sA;stats[m.away].ga+=sH;
+    if(sH>sA){stats[m.home].w++;stats[m.away].l++;stats[m.home].pts+=3}
+    else if(sA>sH){stats[m.away].w++;stats[m.home].l++;stats[m.away].pts+=3}
+    else{stats[m.home].d++;stats[m.away].d++;stats[m.home].pts++;stats[m.away].pts++}
+  }
+  // Also include teams that haven't played yet
+  matches.forEach(m=>{ensure(m.home);ensure(m.away)});
+  // Sort: pts desc, GD desc, GF desc
+  const rows=Object.values(stats).map(t=>({...t,gd:t.gf-t.ga})).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf);
+  const rc=['r1','r2','r3'];
+  document.getElementById('stand-body').innerHTML=rows.length?rows.map((t,i)=>`<tr>
+    <td><span class="rk ${rc[i]||''}">${i+1}</span></td>
+    <td><span style="font-size:14px;margin-right:5px">${tF(t.name)}</span><strong>${t.name}</strong></td>
+    <td>${t.p}</td><td>${t.w}</td><td>${t.d}</td><td>${t.l}</td>
+    <td>${t.gf}</td><td>${t.ga}</td><td>${t.gd>0?'+':''}${t.gd}</td>
+    <td><span class="pbig">${t.pts}</span></td>
+  </tr>`).join(''):'<tr><td colspan="10"><div class="emp"><p>No completed matches yet</p></div></td></tr>';
+}
+
 function renderBkt(){
   const el=document.getElementById('bkt-inner');
   if(!MY_COMP){el.innerHTML='';return}
@@ -1485,6 +1589,10 @@ function renderAdm(){
   if(!CU?.isAdmin)return;
   if(!adminComp){const first=Object.keys(COMPS)[0];if(first)adminComp=first}
   autoLockNearRounds(); // Auto-lock rounds whose first match is within 7 days
+  // Hide Groups admin tab for leagues
+  const ct=compTypeOf(COMPS[adminComp]);
+  const grpsTab=document.getElementById('atab-grps');
+  if(grpsTab)grpsTab.style.display=ct==='tournament'?'':'none';
   renderCompsTab();
   renderUpcoming();
   renderResTab();
@@ -1613,6 +1721,7 @@ window.createComp=async function(){
   const cid='c'+Date.now();
   await ds('comps/'+cid,{
     id:cid,name,type:presetKey,
+    compType:preset.compType||'league',
     fdCode:preset.fdCode,
     fdSeason:preset.fdSeason,
     oddsKey:preset.oddsKey,
@@ -2013,13 +2122,17 @@ function renderBonuses(){
 
   if(b.joker){
     const myJokers=ex.jokerByRound||{};
-    // Find all group/regular-season rounds
-    const groupRounds={};
-    matches.forEach(m=>{if(m.stage==='group'){const r=m.round||'General';(groupRounds[r]=groupRounds[r]||[]).push(m)}});
-    const roundList=Object.keys(groupRounds).sort();
+    const ct=compTypeOf(MY_COMP);
+    // For leagues: all rounds. For tournaments: only group-stage rounds.
+    const eligibleRounds={};
+    matches.forEach(m=>{
+      const ok=(ct==='league')||(ct==='tournament'&&m.stage==='group');
+      if(ok){const r=m.round||'General';(eligibleRounds[r]=eligibleRounds[r]||[]).push(m)}
+    });
+    const roundList=Object.keys(eligibleRounds).sort(naturalCompare);
     html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">🎴 Joker — One Per Round</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.55">Each round, you can play one joker on a single match to <strong>double your points</strong> if correct. Pick from the Tips page. You can move it as long as the match hasn't kicked off yet.</p>
+      <div class="slabel">🎴 Joker — One Per ${ct==='league'?'Matchday':'Round'}</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.55">${ct==='league'?'Each matchday':'Each group round'}, you can play one joker on a single match to <strong>double your points</strong> if correct. Pick from the Tips page. You can move it as long as the match hasn't kicked off yet.</p>
       ${roundList.length?roundList.map(rn=>{
         const rk=safeRoundKey(rn);
         const jmid=myJokers[rk];
@@ -2032,7 +2145,7 @@ function renderBonuses(){
       }).join(''):'<p style="font-size:12px;color:var(--muted)">No matches yet.</p>'}
     </div>`;
   }
-  if(b.koMult){
+  if(b.koMult&&compTypeOf(MY_COMP)==='tournament'){
     html+=`<div class="card" style="margin-bottom:14px">
       <div class="slabel">📈 Knockout Multiplier</div>
       <p style="font-size:13px;color:var(--muted);line-height:1.55">Knockout matches earn extra points: <strong>R32 / R16 / Quarter-final = 1.5×</strong> · <strong>Semi-final = 2×</strong> · <strong>Final = 3×</strong>. Stacks with Joker.</p>
@@ -2041,7 +2154,7 @@ function renderBonuses(){
   if(b.winner){
     const wList=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
     html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">🏆 Tournament Winner</div>
+      <div class="slabel">🏆 Overall Winner</div>
       <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55">Pick who you think will win the whole tournament. ${started?'<strong style="color:var(--gold)">🔒 Locked — tournament has started</strong>':'Locks at the first kick-off.'} Longer-shot picks earn more points.</p>
       ${ex.winner?`<p style="font-size:14px;margin-bottom:10px;padding:10px;background:var(--green-light);border-radius:var(--r);border:1px solid var(--green)">Your pick: <strong>${tF(ex.winner)} ${ex.winner}</strong> · <span class="bdg gr">${bonusPickPts(ex.winnerOdds)} pts if correct</span></p>`:''}
       ${!started&&wList.length?(()=>{
