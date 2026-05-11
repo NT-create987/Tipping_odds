@@ -54,10 +54,37 @@ jobs:
                     const oddsData = await oddsResp.json();
                     const matches = comp.matches || {};
                     let oddsUpdated = 0, oddsSkipped = 0;
+                    // Helper: normalise team names for fuzzy matching
+                    // Strips common suffixes and lowercases for comparison
+                    const normaliseTeam = name => {
+                      if (!name) return '';
+                      return name.toLowerCase()
+                        .replace(/\\s+(fc|cf|sc|afc|football club|f\\.c\\.)\\b/g, '')
+                        .replace(/\\bmanchester\\s+/g, 'man ')
+                        .replace(/\\bwolverhampton\\s+wanderers/g, 'wolves')
+                        .replace(/\\btottenham\\s+hotspur/g, 'tottenham')
+                        .replace(/\\bnewcastle\\s+united/g, 'newcastle')
+                        .replace(/\\bwest\\s+ham\\s+united/g, 'west ham')
+                        .replace(/\\bbrighton\\s+(&|and)\\s+hove\\s+albion/g, 'brighton')
+                        .replace(/\\bnottingham\\s+forest/g, 'forest')
+                        .replace(/\\bsheffield\\s+united/g, 'sheff united')
+                        .replace(/\\bcrystal\\s+palace/g, 'palace')
+                        .replace(/[^a-z0-9 ]/g, '')
+                        .replace(/\\s+/g, ' ')
+                        .trim();
+                    };
                     for (const ev of (oddsData || [])) {
                       const home = ev.home_team, away = ev.away_team;
-                      const matchEntry = Object.entries(matches).find(([_, m]) => m.home === home && m.away === away);
-                      if (!matchEntry) continue;
+                      const nh = normaliseTeam(home), na = normaliseTeam(away);
+                      // Try exact match first, then fuzzy
+                      let matchEntry = Object.entries(matches).find(([_, m]) => m.home === home && m.away === away);
+                      if (!matchEntry) {
+                        matchEntry = Object.entries(matches).find(([_, m]) => normaliseTeam(m.home) === nh && normaliseTeam(m.away) === na);
+                      }
+                      if (!matchEntry) {
+                        console.log('  No match for: ' + home + ' vs ' + away);
+                        continue;
+                      }
                       const [matchId, match] = matchEntry;
                       const safeRound = match.round ? match.round.replace(/[.#\$\[\]/]/g, '_') : '';
                       if (safeRound && lockedRounds[safeRound]) { oddsSkipped++; continue; }
