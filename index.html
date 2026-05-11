@@ -22,7 +22,7 @@ body{background:var(--bg);color:var(--ink);font-family:'Archivo',sans-serif;min-
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:42px 42px;background-position:-1px -1px;opacity:.18;pointer-events:none;z-index:0;mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%)}
 body>*{position:relative;z-index:1}
 
-#hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:200;background:rgba(8,13,20,0.85);backdrop-filter:blur(12px);gap:12px;flex-wrap:wrap}
+#hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:200;background:var(--paper);gap:8px;flex-wrap:wrap}
 .logo{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-0.5px;cursor:pointer;display:flex;align-items:center;gap:8px}
 .logo .ball{width:32px;height:32px;background:var(--green);color:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900}
 .logo .t1{color:var(--ink)}
@@ -39,7 +39,7 @@ body>*{position:relative;z-index:1}
 .uchip{display:flex;align-items:center;gap:8px;background:var(--paper2);border:1px solid var(--line);border-radius:20px;padding:6px 12px;font-size:12px;font-weight:500}
 .uav{width:24px;height:24px;border-radius:50%;background:var(--green);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Archivo Black',sans-serif}
 
-.page{display:none;padding:28px;max-width:1080px;margin:0 auto;animation:fu .3s ease}
+.page{display:none;padding:14px;max-width:1080px;margin:0 auto;animation:fu .3s ease}
 .page.active{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
@@ -59,12 +59,12 @@ body>*{position:relative;z-index:1}
 .cbox p{color:var(--muted);font-size:14px;line-height:1.55;margin-bottom:22px}
 .cbtns{display:flex;gap:10px;justify-content:center}
 
-.ptitle{font-family:'Archivo Black',sans-serif;font-size:36px;letter-spacing:-1px;margin-bottom:6px;color:var(--ink);line-height:1}
+.ptitle{font-family:'Archivo Black',sans-serif;font-size:26px;letter-spacing:-1px;margin-bottom:4px;color:var(--ink);line-height:1}
 .ptitle .b{color:var(--blue)}.ptitle .g{color:var(--green)}
-.psub{color:var(--muted);font-size:14px;margin-bottom:24px}
+.psub{color:var(--muted);font-size:12px;margin-bottom:14px}
 .slabel{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:12px}
 
-.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px}
 .cardsm{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px}
 
 .fld{margin-bottom:14px}
@@ -85,19 +85,19 @@ body>*{position:relative;z-index:1}
 .bsm{padding:6px 12px;font-size:12px}
 .bbl{width:100%}
 
-.srow{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}
-.sbox{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px 20px;flex:1;min-width:110px;position:relative;overflow:hidden}
+.srow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.sbox{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 12px;flex:1;min-width:90px;position:relative;overflow:hidden}
 .sbox::after{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--green)}
 .sbox.b::after{background:var(--blue)}
-.slbl{font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted);font-weight:700;margin-bottom:5px}
-.sval{font-family:'Archivo Black',sans-serif;font-size:30px;color:var(--ink);line-height:1}
+.slbl{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;margin-bottom:2px}
+.sval{font-family:'Archivo Black',sans-serif;font-size:22px;color:var(--ink);line-height:1}
 .sval.bl{color:var(--blue)}.sval.gr{color:var(--green)}
 
 .trow{display:flex;gap:0;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
 .trow.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:2px}
 .trow.scroll::-webkit-scrollbar{height:4px}
 .trow.scroll .tp{white-space:nowrap;flex-shrink:0}
-.tp{padding:8px 18px;font-size:13px;border:none;background:none;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Archivo',sans-serif;font-weight:600;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tp{padding:6px 12px;font-size:12px;border:none;background:none;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Archivo',sans-serif;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tp.active{color:var(--green);border-bottom-color:var(--green)}
 .tp:hover:not(.active){color:var(--ink)}
 
@@ -110,25 +110,25 @@ body>*{position:relative;z-index:1}
 .asw a{color:var(--blue);cursor:pointer;font-weight:600}
 .asw a:hover{text-decoration:underline}
 
-.ml{display:flex;flex-direction:column;gap:10px}
+.ml{display:flex;flex-direction:column;gap:5px}
 .mc{background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:all .15s}
 .mc:hover{border-color:var(--line2);transform:translateY(-1px)}
-.mh{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--paper2);border-bottom:1px solid var(--line);font-size:11px;color:var(--muted);flex-wrap:wrap;gap:5px;font-weight:500}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;background:var(--paper2);border-bottom:1px solid var(--line);font-size:10px;color:var(--muted);flex-wrap:wrap;gap:4px;font-weight:500}
 .mbdg{background:var(--green-light);color:var(--green);border:1px solid rgba(16,185,129,0.3);padding:3px 8px;border-radius:4px;font-size:10px;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
 .mbdg.ko{background:var(--blue-light);color:var(--blue);border-color:rgba(14,165,233,0.3)}
 .mtb{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
 .mtl{font-size:11px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:500}
 .mtv{font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
-.mb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:18px}
+.mb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:10px 12px}
 .tm{text-align:center}
-.tf{font-size:32px;margin-bottom:6px;line-height:1}
-.tn{font-weight:700;font-size:15px;color:var(--ink)}
+.tf{font-size:22px;margin-bottom:3px;line-height:1}
+.tn{font-weight:700;font-size:14px;color:var(--ink);line-height:1.2}
 .tsub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
 .vc{text-align:center;padding:0 8px}
-.vt{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--muted2)}
-.vs{font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--green-bright);letter-spacing:1px}
-.or{display:flex;gap:7px;padding:0 16px 14px}
-.op{flex:1;text-align:center;padding:11px 5px;border-radius:10px;border:1.5px solid var(--line);cursor:pointer;transition:all .14s;background:var(--paper2)}
+.vt{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--muted2)}
+.vs{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--green);letter-spacing:1px}
+.or{display:flex;gap:5px;padding:0 10px 8px}
+.op{flex:1;text-align:center;padding:6px 4px;border-radius:6px;border:1.5px solid var(--line);cursor:pointer;transition:all .14s;background:var(--paper2)}
 .op:hover{border-color:var(--muted);background:var(--line);transform:translateY(-1px)}
 .op.sh{border-color:var(--green);background:var(--green-light)}
 .op.sd{border-color:var(--gold);background:rgba(245,158,11,0.1)}
@@ -137,20 +137,20 @@ body>*{position:relative;z-index:1}
 .op.wrong{border-color:var(--red);background:rgba(239,68,68,0.08)}
 .op.wrong .ov2,.op.wrong .op2{color:var(--red);text-decoration:line-through}
 .ol{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px;font-weight:700}
-.ov2{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:var(--ink)}
-.op2{font-size:10px;margin-top:2px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:500}
+.ov2{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:var(--ink);line-height:1.1}
+.op2{font-size:9px;margin-top:1px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-weight:500}
 .sh .ov2,.sh .op2{color:var(--green)}.sd .ov2,.sd .op2{color:var(--gold)}.sa .ov2,.sa .op2{color:var(--blue)}
-.tbn{padding:9px 16px;border-top:1px solid var(--line);font-size:12px;display:flex;align-items:center;gap:7px;font-weight:500}
+.tbn{padding:5px 10px;border-top:1px solid var(--line);font-size:11px;display:flex;align-items:center;gap:6px;font-weight:500}
 .tbn.won{background:var(--green-light);color:var(--green)}
 .tbn.lost{background:rgba(239,68,68,0.1);color:var(--red)}
 .tbn.pend{color:var(--green)}
 .tbn.none{color:var(--muted)}
-.tcr{padding:6px 16px 9px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;font-weight:500}
-.tcre{padding:7px 16px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);display:flex;gap:14px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-weight:500}
+.tcr{padding:3px 10px 5px;font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px;font-weight:500}
+.tcre{padding:5px 10px;font-size:10px;color:var(--muted);border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-weight:500}
 
 .lbt{width:100%;border-collapse:collapse}
-.lbt th{text-align:left;padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
-.lbt td{padding:13px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
+.lbt th{text-align:left;padding:6px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
+.lbt td{padding:7px 10px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}
 .lbt tr:last-child td{border-bottom:none}
 .lbt tr:hover td{background:var(--paper2);cursor:pointer}
 .lbt tr.me td{background:var(--green-light)}
@@ -189,13 +189,13 @@ body>*{position:relative;z-index:1}
 .btn2{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
 .bsc{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);font-weight:600}
 
-.hi{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;transition:all .15s}.hi:hover{border-color:var(--line2)}
+.hi{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;transition:all .15s}.hi:hover{border-color:var(--line2)}
 .hm{font-weight:600;font-size:13px}
 .hs{font-size:11px;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace}
 .hpts{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700}
 .hpts.won{color:var(--green)}.hpts.lost{color:var(--red)}.hpts.pend{color:var(--muted)}
 
-.amr{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:8px}
+.amr{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:8px 12px;margin-bottom:5px}
 .amt{font-weight:600;font-size:13px;margin-bottom:3px}
 .amm{font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace}
 .aod{font-size:11px;color:var(--muted);margin-bottom:7px}
@@ -529,6 +529,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   <div class="psub">Manage competitions, fixtures and results.</div>
   <div class="trow">
     <button class="tp active" onclick="aTab('comps',this)">Comps</button>
+    <button class="tp" onclick="aTab('mod',this)">Manual Odds</button>
     <button class="tp" onclick="aTab('add',this)">Add Match</button>
     <button class="tp" onclick="aTab('imp',this)">Import API</button>
     <button class="tp" onclick="aTab('res',this)">Results</button>
@@ -549,8 +550,13 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     </div>
   </div>
 
+  <div id="at-mod" style="display:none">
+    <div class="ibox">🎯 All matches needing odds, grouped by matchday. Red rows = matchday is within 7 days and tipping is blocked. Once all odds are in, tipping unlocks.</div>
+    <div id="manualOddsList"></div>
+  </div>
+
   <div id="at-add" style="display:none">
-    <div class="ibox">💡 Get decimal odds from <strong>Oddschecker.com</strong> or <strong>bet365</strong>. Points = 100 − (1 / odds × 100).</div>
+    <div class="ibox">💡 Manually add a one-off match. Once added, it appears in Manual Odds tab where you set the odds.</div>
     <div class="card" style="margin-bottom:18px">
       <div class="slabel">Add New Match</div>
       <div class="fr">
@@ -562,18 +568,17 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
         <div class="fld"><label>Venue City</label><input type="text" id="avc" placeholder="e.g. Mexico City"></div>
       </div>
       <div class="fr">
-        <div class="fld"><label>Round / Group</label><input type="text" id="ard" placeholder="e.g. Group A"></div>
-        <div class="fld"><label>Stage</label><select id="ast"><option value="group">Group Stage</option><option value="knockout">Knockout (no draw)</option></select></div>
+        <div class="fld"><label>Matchday / Round *</label><input type="text" id="ard" placeholder="e.g. Matchday 35 or Group A" list="existing-rounds" required><datalist id="existing-rounds"></datalist><div class="fhint">Required. Pick from existing or type a new one.</div></div>
+        <div class="fld"><label>Stage</label><select id="ast"><option value="group">Group/League</option><option value="knockout">Knockout (no draw)</option></select></div>
       </div>
       <div class="fr3">
-        <div class="fld"><label>🏠 Home Odds</label><input type="number" id="aoh" step="0.01" min="1.01" placeholder="2.10" inputmode="decimal"></div>
-        <div class="fld" id="adf"><label>🤝 Draw Odds</label><input type="number" id="aod" step="0.01" min="1.01" placeholder="3.40" inputmode="decimal"></div>
-        <div class="fld"><label>✈ Away Odds</label><input type="number" id="aoa" step="0.01" min="1.01" placeholder="3.60" inputmode="decimal"></div>
+        <div class="fld"><label>🏠 Home Odds (optional)</label><input type="number" id="aoh" step="0.01" min="1.01" placeholder="2.10" inputmode="decimal"></div>
+        <div class="fld" id="adf"><label>🤝 Draw Odds (optional)</label><input type="number" id="aod" step="0.01" min="1.01" placeholder="3.40" inputmode="decimal"></div>
+        <div class="fld"><label>✈ Away Odds (optional)</label><input type="number" id="aoa" step="0.01" min="1.01" placeholder="3.60" inputmode="decimal"></div>
       </div>
+      <div class="fhint" style="margin-bottom:10px">Odds optional — leave blank and set them later in Manual Odds tab.</div>
       <button class="btn bg-grn" onclick="addMatch()">Add Match →</button>
     </div>
-    <div class="slabel">Upcoming Matches (active comp)</div>
-    <div id="a-upcoming"></div>
   </div>
 
   <div id="at-imp" style="display:none">
@@ -619,12 +624,18 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div class="ibox">Set tournament-winner odds for each team and the top-scorer odds for each player. These power the Bonus Picks for any pool that uses them.</div>
     <div class="card" style="margin-bottom:16px">
       <div class="slabel">🏆 Overall Winner Odds (per team)</div>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Add each team with their pre-tournament outright odds. Used to calculate winner-pick bonus.</p>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Bootstrap from The Odds API, then edit/delete as needed. Once you click <strong>Lock & Use</strong>, players can pick from these.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn bp bsm" onclick="importWinnerOdds()">📥 Import Teams (from Odds API)</button>
+        <button class="btn bg-grn bsm" onclick="lockWinnerOdds()">🔒 Lock & Use These</button>
+      </div>
+      <hr class="dv" style="margin:10px 0">
+      <div class="slabel" style="font-size:10px">Or add manually:</div>
       <div class="fr">
         <div class="fld"><label>Team</label><input type="text" id="aw-team" placeholder="e.g. Brazil"></div>
         <div class="fld"><label>Outright Odds</label><input type="number" id="aw-odds" step="0.1" min="1.01" placeholder="5.00" inputmode="decimal"></div>
       </div>
-      <button class="btn bg-grn bsm" onclick="addWinnerOdds()">Add Team</button>
+      <button class="btn bs bsm" onclick="addWinnerOdds()">Add Team</button>
       <hr class="dv">
       <div id="winner-odds-list"></div>
       <hr class="dv">
@@ -635,12 +646,18 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     </div>
     <div class="card">
       <div class="slabel">⚽ Top Scorer Odds (per player)</div>
-      <p style="color:var(--muted);font-size:12px;margin-bottom:12px">Add players who could win the Golden Boot.</p>
+      <p style="color:var(--muted);font-size:12px;margin-bottom:10px">Bootstrap top 20 from The Odds API, then edit as needed.</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn bp bsm" onclick="importScorerOdds()">📥 Import Top 20 (from Odds API)</button>
+        <button class="btn bg-grn bsm" onclick="lockScorerOdds()">🔒 Lock & Use These</button>
+      </div>
+      <hr class="dv" style="margin:10px 0">
+      <div class="slabel" style="font-size:10px">Or add manually:</div>
       <div class="fr">
         <div class="fld"><label>Player</label><input type="text" id="as-player" placeholder="e.g. Kylian Mbappé"></div>
         <div class="fld"><label>Outright Odds</label><input type="number" id="as-odds" step="0.1" min="1.01" placeholder="6.00" inputmode="decimal"></div>
       </div>
-      <button class="btn bg-grn bsm" onclick="addScorerOdds()">Add Player</button>
+      <button class="btn bs bsm" onclick="addScorerOdds()">Add Player</button>
       <hr class="dv">
       <div id="scorer-odds-list"></div>
       <hr class="dv">
@@ -1171,6 +1188,12 @@ window.doDeletePool=function(){
 };
 
 // ─── TIPS ────────────────────────
+// Returns true if all matches in this round have odds (or have a result, no need for odds)
+function roundIsOpen(matches,roundName){
+  const rms=matches.filter(m=>(m.round||'General')===roundName);
+  if(!rms.length)return true;
+  return rms.every(m=>m.result||(m.oddsH&&m.oddsH>=1.01&&m.oddsA&&m.oddsA>=1.01&&(isKO(m)||(m.oddsD&&m.oddsD>=1.01))));
+}
 function renderTips(){
   if(!CU)return;
   if(!MY_POOL){
@@ -1198,7 +1221,8 @@ function renderTips(){
   document.getElementById('s-co').textContent=corr;
   document.getElementById('s-bw').textContent=best>0?best:'—';
   matches.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
-  const rnds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
+  const _ct=compTypeOf(MY_COMP);
+  const rnds=[...new Set(matches.map(m=>m.round||'General'))].sort((a,b)=>roundCompare(a,b,_ct));
   const tabs=document.getElementById('ttabs');tabs.innerHTML='';
   // Add 'scroll' class if many rounds (leagues with 38 matchdays)
   if(rnds.length>8)tabs.classList.add('scroll');else tabs.classList.remove('scroll');
@@ -1222,14 +1246,31 @@ function renderTips(){
         curRnd=allDone[0]?.rn||rnds[0];
       }
     }
-    rnds.forEach(rv=>{const b=document.createElement('button');b.className='tp'+(curRnd===rv?' active':'');b.textContent=rv;b.onclick=()=>{curRnd=rv;renderTips()};tabs.appendChild(b)});
+    rnds.forEach(rv=>{
+      const b=document.createElement('button');
+      b.className='tp'+(curRnd===rv?' active':'');
+      const isOpen=roundIsOpen(matches,rv);
+      b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
+      b.onclick=()=>{curRnd=rv;renderTips()};
+      tabs.appendChild(b);
+    });
     // Scroll the active tab into view
     setTimeout(()=>{const a=tabs.querySelector('.tp.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
   }else curRnd=rnds[0]||null;
-  const vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
+  let vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
+  // Sort chronologically within the round
+  vis=vis.sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0));
+  // Determine if current round is locked from tipping (some matches missing odds)
+  const _curRoundOpen=curRnd?roundIsOpen(matches,curRnd):true;
+  // If round not open, add a notice at top
+  let pendingNotice='';
+  if(curRnd&&!_curRoundOpen){
+    const missing=vis.filter(m=>!m.result&&(!m.oddsH||m.oddsH<1.01)).length;
+    pendingNotice=`<div class="wbox">⏳ <strong>This round is not open for tipping yet.</strong> ${missing} match${missing!==1?'es':''} still need odds. Tipping will unlock once all odds are set.</div>`;
+  }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  el.innerHTML=vis.map(m=>mCard(m,tips[m.id])).join('');
+  el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
@@ -1254,7 +1295,7 @@ function getAllTipsForPool(poolId){
   return window._poolTipsCache[poolId];
 }
 
-function mCard(m,myTip){
+function mCard(m,myTip,roundOpen=true){
   const lk=isLk(m),ko=isKO(m);
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
   const allTips=getAllTipsForPool(CP);
@@ -1278,13 +1319,12 @@ function mCard(m,myTip){
   const pc=pick=>{
     let c='op';
     if(m.result){
-      // After result: highlight the winning outcome green, mark user's wrong pick red
-      if(m.result===pick)c+=' sh'; // winning outcome → green
-      else if(myTip?.pick===pick)c+=' wrong'; // user's wrong pick → red
+      if(m.result===pick)c+=' sh';
+      else if(myTip?.pick===pick)c+=' wrong';
     } else if(myTip?.pick===pick){
       c+=' '+(pick==='H'?'sh':pick==='D'?'sd':'sa');
     }
-    if(lk||!hasOdds)c+=' lk';
+    if(lk||!hasOdds||!roundOpen)c+=' lk';
     return c;
   };
   let trev='';
@@ -1321,17 +1361,23 @@ function mCard(m,myTip){
     <div class="${pc('H')}" onclick="pTip('${m.id}','H')"><div class="ol">Home</div><div class="ov2">${pH}</div><div class="op2">pts</div></div>
     ${!ko?`<div class="${pc('D')}" onclick="pTip('${m.id}','D')"><div class="ol">Draw</div><div class="ov2">${pD}</div><div class="op2">pts</div></div>`:''}
     <div class="${pc('A')}" onclick="pTip('${m.id}','A')"><div class="ol">Away</div><div class="ov2">${pA}</div><div class="op2">pts</div></div>
-  </div>`:`<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Odds will be available closer to kick-off</div>`;
+  </div>`:(()=>{
+    // No odds — show appropriate message based on match state
+    if(m.result)return'<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ This match finished before odds were tracked</div>';
+    const ko_time=m.datetime?new Date(m.datetime).getTime():0;
+    if(ko_time&&ko_time<Date.now())return'<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Kick-off has passed — no odds were recorded</div>';
+    return'<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Odds will be available closer to kick-off</div>';
+  })();
   return`<div class="mc">
     <div class="mh">
       <span class="mbdg ${ko?'ko':''}">${m.round||'General'}${ko?' · KO':''}</span>
-      <div class="mtb"><span class="mtl">${fmtL(m.datetime)}</span>${m.venue?`<span class="mtv">${fmtV(m.datetime,m.venue)}</span>`:''}</div>
+      <div class="mtb"><span class="mtl">🇦🇺 ${fmtL(m.datetime)}</span>${m.venue?`<span class="mtv">📍 ${fmtV(m.datetime,m.venue)}</span>`:''}</div>
       ${lk?'<span style="color:var(--muted2);font-size:11px">🔒</span>':''}
     </div>
     <div class="mb">
-      <div class="tm"><div class="tf">${tF(m.home)}</div><div class="tn">${m.home}</div>${m.homePH?`<div class="tsub">${m.homePH}</div>`:''}</div>
+      <div class="tm"><div class="tn">${m.home}</div>${m.homePH?`<div class="tsub">${m.homePH}</div>`:''}</div>
       <div class="vc">${m.result?`<div class="vs">${m.scoreH??'?'} – ${m.scoreA??'?'}</div>`:`<div class="vt">VS</div>`}</div>
-      <div class="tm"><div class="tf">${tF(m.away)}</div><div class="tn">${m.away}</div>${m.awayPH?`<div class="tsub">${m.awayPH}</div>`:''}</div>
+      <div class="tm"><div class="tn">${m.away}</div>${m.awayPH?`<div class="tsub">${m.awayPH}</div>`:''}</div>
     </div>
     ${multBadge}${oddsRow}${trev}${banner}${jokerBtn}
   </div>`;
@@ -1404,6 +1450,9 @@ window.pTip=async function(mid,pick){
   const m=MY_COMP.matches?.[mid];
   if(!m||isLk(m)){toast('Match locked','err');return}
   if(!m.oddsH||m.oddsH<1.01){toast('No odds yet','err');return}
+  // Check round is open (all matches have odds)
+  const allMatches=Object.values(MY_COMP.matches||{});
+  if(!roundIsOpen(allMatches,m.round||'General')){toast('Round not open — waiting for all odds to be set','err');return}
   showOv();
   const pts=calcMatchPts(m,pick);
   await ds(`tips/${CP}/${CU.username}/${mid}`,{pick,pts,ts:Date.now()});
@@ -1579,22 +1628,30 @@ function renderBkt(){
 
 // ─── ADMIN ────────────────────────
 window.aTab=function(t,btn){
-  ['comps','add','imp','res','grps','bonus','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
+  ['comps','mod','add','imp','res','grps','bonus','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
   document.querySelectorAll('#page-adm .tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  if(t==='res')renderResTab();if(t==='grps')renderGrpsAdmin();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();if(t==='bonus')renderBonusAdmin();if(t==='imp')renderLockedRounds();
+  if(t==='res')renderResTab();if(t==='grps')renderGrpsAdmin();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();if(t==='bonus')renderBonusAdmin();if(t==='imp')renderLockedRounds();if(t==='mod')renderManualOdds();
 };
 document.getElementById('ast').onchange=function(){document.getElementById('adf').style.display=this.value==='knockout'?'none':''};
 
 function renderAdm(){
   if(!CU?.isAdmin)return;
   if(!adminComp){const first=Object.keys(COMPS)[0];if(first)adminComp=first}
-  autoLockNearRounds(); // Auto-lock rounds whose first match is within 7 days
-  // Hide Groups admin tab for leagues
+  autoLockNearRounds();
   const ct=compTypeOf(COMPS[adminComp]);
   const grpsTab=document.getElementById('atab-grps');
   if(grpsTab)grpsTab.style.display=ct==='tournament'?'':'none';
+  // Populate matchday datalist for Add Match
+  const dl=document.getElementById('existing-rounds');
+  if(dl){
+    const comp=COMPS[adminComp];
+    if(comp&&comp.matches){
+      const rounds=[...new Set(Object.values(comp.matches).map(m=>m.round).filter(Boolean))].sort((a,b)=>roundCompare(a,b,ct));
+      dl.innerHTML=rounds.map(r=>`<option value="${r}">`).join('');
+    }
+  }
   renderCompsTab();
-  renderUpcoming();
+  renderManualOdds();
   renderResTab();
   renderLockedRounds();
 }
@@ -1640,6 +1697,26 @@ function naturalCompare(a,b){
     if(nn)return nn;
   }
   return ax.length-bx.length;
+}
+// Tournament round order: groups come before knockouts
+function tournamentRoundOrder(rn){
+  if(!rn)return 999;
+  const r=rn.toLowerCase();
+  // Group stage rounds first (matchday 1/2/3, or group A/B/C)
+  if(r.includes('matchday')||r.match(/^group\s/)||r.includes('regular'))return 100;
+  if(r.includes('round of 32'))return 200;
+  if(r.includes('round of 16'))return 300;
+  if(r.includes('quarter'))return 400;
+  if(r.includes('semi'))return 500;
+  if(r.includes('final'))return 600;
+  return 700;
+}
+function roundCompare(a,b,compType){
+  if(compType==='tournament'){
+    const oa=tournamentRoundOrder(a),ob=tournamentRoundOrder(b);
+    if(oa!==ob)return oa-ob;
+  }
+  return naturalCompare(a,b);
 }
 
 function renderLockedRounds(){
@@ -1773,16 +1850,21 @@ window.deleteComp=function(id){
 window.addMatch=async function(){
   if(!CU?.isAdmin||!adminComp){toast('Pick an active comp first','err');return}
   const home=document.getElementById('ah').value.trim(),away=document.getElementById('aa').value.trim(),dt=document.getElementById('adt').value,vc=document.getElementById('avc').value.trim(),rd=document.getElementById('ard').value.trim(),st=document.getElementById('ast').value;
-  const oh=parseFloat(document.getElementById('aoh').value),od=st==='knockout'?1:parseFloat(document.getElementById('aod').value),oa=parseFloat(document.getElementById('aoa').value);
-  if(!home||!away||!dt||isNaN(oh)||isNaN(oa)||(st!=='knockout'&&isNaN(od))){toast('Fill all fields','err');return}
-  if(oh<1.01||oa<1.01||(st!=='knockout'&&od<1.01)){toast('Odds must be above 1.0','err');return}
+  if(!home||!away||!dt||!rd){toast('Fill all fields (round is required)','err');return}
+  // Odds optional now — admin sets them via Manual Odds afterwards
+  const oh=parseFloat(document.getElementById('aoh').value)||null;
+  const od=st==='knockout'?null:(parseFloat(document.getElementById('aod').value)||null);
+  const oa=parseFloat(document.getElementById('aoa').value)||null;
   await doAdd(home,away,dt,vc,rd,st,oh,od,oa);
+  toast('Match added — now set odds in Manual Odds tab','ok');
 };
 async function doAdd(home,away,dt,vc,rd,st,oh,od,oa){
   const id='m'+Date.now()+Math.random().toString(36).slice(2,5);
-  await ds(`comps/${adminComp}/matches/${id}`,{id,home,away,datetime:dt,venue:vc,round:rd,stage:st,oddsH:oh,oddsD:od,oddsA:oa,result:null,scoreH:null,scoreA:null,created:Date.now()});
-  ['ah','aa','adt','avc','ard','aoh','aod','aoa'].forEach(f=>{const el=document.getElementById(f);if(el)el.value=''});
-  toast(home+' vs '+away+' added!','ok');
+  // If odds provided manually at creation, flag them
+  const manualOdds=(oh&&oa)?true:false;
+  await ds(`comps/${adminComp}/matches/${id}`,{id,home,away,datetime:dt,venue:vc,round:rd,stage:st,oddsH:oh,oddsD:od,oddsA:oa,manualOdds,result:null,scoreH:null,scoreA:null,created:Date.now()});
+  ['ah','aa','adt','avc','aoh','aod','aoa'].forEach(f=>{const el=document.getElementById(f);if(el)el.value=''});
+  // Don't clear 'ard' so they can quickly add multiple matches to same round
 }
 
 // Trigger GitHub Actions workflow remotely (uses server-side execution to bypass CORS)
@@ -1914,36 +1996,101 @@ window.clearAllMatches=function(){
   });
 };
 
-function renderUpcoming(){
+// Renders the Manual Odds tab — all matches grouped by matchday, red highlights for urgent
+function renderManualOdds(){
+  const el=document.getElementById('manualOddsList');
+  if(!el)return;
   const comp=COMPS[adminComp];
-  const matches=comp?.matches?Object.values(comp.matches):[];
-  const up=matches.filter(m=>!m.result).sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
-  const el=document.getElementById('a-upcoming');
   if(!comp){el.innerHTML='<div class="emp"><p>No active comp selected</p></div>';return}
-  if(!up.length){el.innerHTML='<div class="emp"><div class="ei">📋</div><p>No upcoming matches</p></div>';return}
-  el.innerHTML=up.slice(0,30).map(m=>`<div class="amr">
-    <div class="amt">${tF(m.home)} ${m.home} vs ${m.away} ${tF(m.away)}</div>
-    <div class="amm">${m.round||''} · ${fmtL(m.datetime)}${m.venue?' · '+m.venue:''}</div>
-    <div class="aod">H: <span>${m.oddsH?(+m.oddsH).toFixed(2):'TBC'}</span> · D: <span>${m.oddsD?(+m.oddsD).toFixed(2):'TBC'}</span> · A: <span>${m.oddsA?(+m.oddsA).toFixed(2):'TBC'}</span>${m.noisyH?` <span style="color:var(--muted2)">·  noisy: ${(+m.noisyH).toFixed(2)}/${m.noisyD?(+m.noisyD).toFixed(2):'-'}/${(+m.noisyA).toFixed(2)}</span>`:''}</div>
-    <div style="display:flex;gap:7px;flex-wrap:wrap">
-      <button class="btn bgh bsm" onclick="setOdds('${m.id}')">💰 Set Odds</button>
-      <button class="btn bd bsm" onclick="delMatch('${m.id}')">🗑 Delete</button>
-    </div>
-  </div>`).join('')+(up.length>30?`<div class="emp"><p>+ ${up.length-30} more</p></div>`:'');
+  const matches=comp.matches?Object.values(comp.matches):[];
+  // Only consider non-finished matches
+  const upcoming=matches.filter(m=>!m.result);
+  if(!upcoming.length){el.innerHTML='<div class="emp"><div class="ei">✓</div><p>All matches have results</p></div>';return}
+  // Group by round
+  const groups={};
+  upcoming.forEach(m=>{const r=m.round||'General';(groups[r]=groups[r]||[]).push(m)});
+  // Sort each round's matches chronologically
+  Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
+  // Sort rounds in proper order
+  const ct=compTypeOf(comp);
+  const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
+  // For each round, check if it's urgent (within 7 days)
+  const now=Date.now();
+  const SEVEN=7*24*60*60*1000;
+  let html='';
+  for(const rn of rounds){
+    const rms=groups[rn];
+    const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0));
+    const isUrgent=earliest&&(earliest-now)<=SEVEN;
+    const allHaveOdds=rms.every(m=>m.oddsH&&m.oddsH>=1.01&&m.oddsA&&m.oddsA>=1.01&&(isKO(m)||(m.oddsD&&m.oddsD>=1.01)));
+    const missingCount=rms.filter(m=>!m.oddsH||m.oddsH<1.01).length;
+    const statusBadge=allHaveOdds?'<span class="bdg gr">✓ All odds in</span>':(isUrgent?`<span class="bdg" style="background:rgba(197,40,61,0.15);color:var(--red)">⚠ ${missingCount} missing</span>`:`<span class="bdg gy">${missingCount} missing</span>`);
+    html+=`<div style="margin-top:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px"><span>${rn}</span>${statusBadge}<span style="color:var(--muted);font-size:11px;font-weight:500">${earliest?'first: '+fmtL(new Date(earliest).toISOString()):''}</span></div>`;
+    for(const m of rms){
+      const has=m.oddsH&&m.oddsH>=1.01;
+      const dt=m.datetime?new Date(m.datetime).getTime():0;
+      const isUrgentMatch=isUrgent&&!has;
+      const rowStyle=isUrgentMatch?'border-color:var(--red);background:rgba(197,40,61,0.04)':'';
+      const oddsText=has?`H ${(+m.oddsH).toFixed(2)} · D ${m.oddsD?(+m.oddsD).toFixed(2):'-'} · A ${(+m.oddsA).toFixed(2)}`:'<em style="color:var(--red)">No odds yet</em>';
+      const manualTag=m.manualOdds?' <span class="bdg go" style="font-size:9px">MANUAL</span>':'';
+      html+=`<div class="amr" style="${rowStyle}"><div class="amt">${m.home} vs ${m.away}${manualTag}</div><div class="amm">${fmtL(m.datetime)}${m.venue?' · '+m.venue:''}</div><div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace">${oddsText}</div><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn ${has?'bgh':'bg-grn'} bsm" onclick="setOdds('${m.id}')">${has?'✏ Edit Odds':'💰 Set Odds'}</button><button class="btn bd bsm" onclick="delMatch('${m.id}')">🗑</button></div></div>`;
+    }
+  }
+  el.innerHTML=html;
 }
+
+// Update setOdds to set a manualOdds=true flag so the workflow won't overwrite
+window.setOdds=async function(mid){
+  if(!adminComp)return;
+  const m=COMPS[adminComp]?.matches?.[mid];if(!m)return;
+  const oh=parseFloat(prompt('Home odds:',m.oddsH||'2.00'));if(isNaN(oh)||oh<1.01)return;
+  const ko=isKO(m);let od=1;
+  if(!ko){od=parseFloat(prompt('Draw odds:',m.oddsD||'3.20'));if(isNaN(od)||od<1.01)return}
+  const oa=parseFloat(prompt('Away odds:',m.oddsA||'3.50'));if(isNaN(oa)||oa<1.01)return;
+  await du(`comps/${adminComp}/matches/${mid}`,{oddsH:oh,oddsD:od,oddsA:oa,manualOdds:true});
+  toast('Odds set','ok');
+  renderManualOdds();
+};
+
+function renderUpcoming(){/* deprecated — replaced by renderManualOdds */}
 
 function renderResTab(){
   const comp=COMPS[adminComp];
   if(!comp){document.getElementById('a-reslist').innerHTML='<div class="emp"><p>No active comp</p></div>';return}
   const matches=comp.matches?Object.values(comp.matches):[];
-  const pend=matches.filter(m=>!m.result&&isLk(m)).sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
-  const done=matches.filter(m=>m.result).sort((a,b)=>new Date(b.datetime)-new Date(a.datetime));
-  const el=document.getElementById('a-reslist');const rm={H:'Home Win',D:'Draw',A:'Away Win'};
+  const ct=compTypeOf(comp);
+  const rm={H:'Home Win',D:'Draw',A:'Away Win'};
+  // Group by round and sort by round order
+  function groupByRound(arr){
+    const g={};
+    arr.forEach(m=>{const r=m.round||'General';(g[r]=g[r]||[]).push(m)});
+    Object.keys(g).forEach(r=>g[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
+    return g;
+  }
+  const pend=matches.filter(m=>!m.result&&isLk(m));
+  const done=matches.filter(m=>m.result);
+  const pendG=groupByRound(pend);
+  const doneG=groupByRound(done);
+  const pendRnds=Object.keys(pendG).sort((a,b)=>roundCompare(a,b,ct));
+  const doneRnds=Object.keys(doneG).sort((a,b)=>roundCompare(a,b,ct));
+  const el=document.getElementById('a-reslist');
   let html='';
-  if(pend.length){html+=`<div class="slabel">Awaiting Result</div>`;html+=pend.map(m=>`<div class="amr"><div class="amt">${tF(m.home)} ${m.home} vs ${m.away} ${tF(m.away)}</div><div class="amm">${m.round||''} · ${fmtL(m.datetime)}</div>
-    <div class="rbs"><button class="rb rh ${m.result==='H'?'ac':''}" onclick="setRes('${m.id}','H')">🏠 Home</button>${!isKO(m)?`<button class="rb rd ${m.result==='D'?'ac':''}" onclick="setRes('${m.id}','D')">🤝 Draw</button>`:''}<button class="rb ra ${m.result==='A'?'ac':''}" onclick="setRes('${m.id}','A')">✈ Away</button></div>
-  </div>`).join('')}
-  if(done.length){html+=`<div class="slabel" style="margin-top:18px">Completed</div>`;html+=done.slice(0,20).map(m=>`<div class="amr"><div class="amt">${tF(m.home)} ${m.home} vs ${m.away} ${tF(m.away)} <span class="bdg gr" style="margin-left:6px">${rm[m.result]}</span></div><div class="amm">${m.round||''} · ${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('')}
+  if(pend.length){
+    html+=`<div class="slabel">Awaiting Result</div>`;
+    for(const rn of pendRnds){
+      html+=`<div style="font-weight:700;font-size:13px;margin:10px 0 6px;color:var(--ink2)">${rn}</div>`;
+      html+=pendG[rn].map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)}</div>
+        <div class="rbs"><button class="rb rh ${m.result==='H'?'ac':''}" onclick="setRes('${m.id}','H')">🏠 Home</button>${!isKO(m)?`<button class="rb rd ${m.result==='D'?'ac':''}" onclick="setRes('${m.id}','D')">🤝 Draw</button>`:''}<button class="rb ra ${m.result==='A'?'ac':''}" onclick="setRes('${m.id}','A')">✈ Away</button></div>
+      </div>`).join('');
+    }
+  }
+  if(done.length){
+    html+=`<div class="slabel" style="margin-top:18px">Completed</div>`;
+    for(const rn of doneRnds){
+      html+=`<div style="font-weight:700;font-size:13px;margin:10px 0 6px;color:var(--ink2)">${rn}</div>`;
+      html+=doneG[rn].map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away} <span class="bdg gr" style="margin-left:6px">${m.scoreH??'?'}–${m.scoreA??'?'} ${rm[m.result]}</span></div><div class="amm">${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('');
+    }
+  }
   if(!pend.length&&!done.length)html='<div class="emp"><div class="ei">⏳</div><p>No locked matches yet</p></div>';
   el.innerHTML=html;
 }
@@ -1975,14 +2122,7 @@ window.fixRes=function(mid){
     await du(`comps/${adminComp}/matches/${mid}`,{result:null});toast('Cleared','info');renderResTab();
   });
 };
-window.setOdds=async function(mid){
-  const m=COMPS[adminComp]?.matches?.[mid];if(!m)return;
-  const oh=parseFloat(prompt('Home odds:',m.oddsH||'2.00'));if(isNaN(oh)||oh<1.01)return;
-  const ko=isKO(m);let od=1;
-  if(!ko){od=parseFloat(prompt('Draw odds:',m.oddsD||'3.20'));if(isNaN(od)||od<1.01)return}
-  const oa=parseFloat(prompt('Away odds:',m.oddsA||'3.50'));if(isNaN(oa)||oa<1.01)return;
-  await du(`comps/${adminComp}/matches/${mid}`,{oddsH:oh,oddsD:od,oddsA:oa});toast('Odds set','ok');
-};
+
 window.delMatch=function(mid){
   const m=COMPS[adminComp]?.matches?.[mid];if(!m)return;
   showC('Delete Match?',`Remove ${m.home} vs ${m.away}? All tips for it across all pools will be deleted.`,async()=>{
@@ -2039,6 +2179,9 @@ function renderBonusAdmin(){
   const comp=COMPS[adminComp];if(!comp)return;
   const winnerOdds=comp.winnerOdds||{};
   const scorerOdds=comp.scorerOdds||{};
+  // Show lock status in admin
+  const winnerLocked=comp.winnerOddsLocked;
+  const scorerLocked=comp.scorerOddsLocked;
 
   // Winner list
   const wList=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
@@ -2075,6 +2218,94 @@ window.addWinnerOdds=async function(){
   await ds(`comps/${adminComp}/winnerOdds/${safeKey(team)}`,odds);
   document.getElementById('aw-team').value='';document.getElementById('aw-odds').value='';
   toast(team+' added','ok');
+};
+
+// Import outright winner odds from The Odds API
+window.importWinnerOdds=async function(){
+  if(!adminComp)return;
+  const comp=COMPS[adminComp];if(!comp?.oddsKey){toast('No oddsKey set on comp','err');return}
+  showOv();
+  try{
+    const url=`https://api.the-odds-api.com/v4/sports/${comp.oddsKey}/odds?apiKey=${ODDS_API_KEY}&regions=au&markets=outrights&oddsFormat=decimal`;
+    const r=await fetch(url);
+    if(!r.ok){hideOv();const t=await r.text();toast('API error: '+(t.includes('UNKNOWN_SPORT')?'sport not active yet':r.status),'err');return}
+    const data=await r.json();
+    if(!Array.isArray(data)||!data.length){hideOv();toast('No outright markets available','info');return}
+    // Find a tournament-winner market — usually the first event
+    let added=0;
+    for(const ev of data){
+      const bk=ev.bookmakers?.[0];if(!bk)continue;
+      const market=bk.markets.find(m=>m.key==='outrights');if(!market)continue;
+      for(const o of market.outcomes||[]){
+        if(o.name&&o.price>=1.01){
+          await ds(`comps/${adminComp}/winnerOdds/${safeKey(o.name)}`,o.price);
+          added++;
+        }
+      }
+      break; // only first event (the tournament outright market)
+    }
+    hideOv();
+    toast('Imported '+added+' teams. Edit/delete as needed, then Lock.','ok');
+    renderBonusAdmin();
+  }catch(e){hideOv();toast('Import failed: '+e.message,'err')}
+};
+
+// Import top 20 scorer odds from The Odds API
+window.importScorerOdds=async function(){
+  if(!adminComp)return;
+  const comp=COMPS[adminComp];if(!comp?.oddsKey){toast('No oddsKey set','err');return}
+  showOv();
+  try{
+    // Top scorer markets typically use 'player_goal_scorer_anytime' or similar
+    // Try player_goal_scorer_anytime first, then tops scorer outright
+    const tryKeys=['top_goalscorer','player_goal_scorer_season','outrights'];
+    let found=false,added=0;
+    for(const mkey of tryKeys){
+      const url=`https://api.the-odds-api.com/v4/sports/${comp.oddsKey}/odds?apiKey=${ODDS_API_KEY}&regions=au&markets=${mkey}&oddsFormat=decimal`;
+      try{
+        const r=await fetch(url);
+        if(!r.ok)continue;
+        const data=await r.json();
+        if(!Array.isArray(data)||!data.length)continue;
+        // Find top scorer outcomes — sort by odds ascending and take top 20
+        const allOutcomes=[];
+        for(const ev of data){
+          const bk=ev.bookmakers?.[0];if(!bk)continue;
+          const m=bk.markets.find(mm=>mm.key===mkey);if(!m)continue;
+          for(const o of m.outcomes||[]){
+            if(o.name&&o.price>=1.01)allOutcomes.push(o);
+          }
+        }
+        if(!allOutcomes.length)continue;
+        const top=allOutcomes.sort((a,b)=>a.price-b.price).slice(0,20);
+        for(const o of top){
+          await ds(`comps/${adminComp}/scorerOdds/${safeKey(o.name)}`,o.price);
+          added++;
+        }
+        found=true;break;
+      }catch(e){continue}
+    }
+    hideOv();
+    if(found)toast('Imported '+added+' players. Edit/delete as needed, then Lock.','ok');
+    else toast('No scorer market found — add manually','info');
+    renderBonusAdmin();
+  }catch(e){hideOv();toast('Import failed: '+e.message,'err')}
+};
+
+// Lock the current winner odds — sets a flag
+window.lockWinnerOdds=async function(){
+  if(!adminComp)return;
+  showC('Lock Winner Odds?','Once locked, these odds stay fixed and players can pick from them. You can still edit individual entries afterwards.',async()=>{
+    await ds(`comps/${adminComp}/winnerOddsLocked`,true);
+    toast('Winner odds locked — players can now pick','ok');
+  },false);
+};
+window.lockScorerOdds=async function(){
+  if(!adminComp)return;
+  showC('Lock Scorer Odds?','Once locked, these odds stay fixed and players can pick from them. You can still edit individual entries afterwards.',async()=>{
+    await ds(`comps/${adminComp}/scorerOddsLocked`,true);
+    toast('Scorer odds locked — players can now pick','ok');
+  },false);
 };
 window.delWinnerOdds=async function(team){
   await dr(`comps/${adminComp}/winnerOdds/${safeKey(team)}`);toast('Removed','info');
