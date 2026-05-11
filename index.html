@@ -7,19 +7,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  /* Dark theme inspired by Bolt's design */
-  --bg:#080d14;--paper:#0f1620;--paper2:#1a2230;
-  --ink:#ffffff;--ink2:#cbd5e1;
-  --line:#1e293b;--line2:#334155;
-  --muted:#94a3b8;--muted2:#64748b;
-  --green:#10b981;--green-light:rgba(16,185,129,0.1);--green-bright:#34d399;
-  --blue:#0ea5e9;--blue-bright:#38bdf8;--blue-light:rgba(14,165,233,0.1);
-  --red:#ef4444;--gold:#f59e0b;
-  --r:10px;--r2:14px;
+  /* Light theme */
+  --bg:#fafbf7;--paper:#ffffff;--paper2:#f3f5ee;
+  --ink:#0a1120;--ink2:#1a2438;
+  --line:#dde1d6;--line2:#c5cab8;
+  --muted:#5a6275;--muted2:#8b92a3;
+  --green:#0a7e3d;--green-light:#e8f5ed;--green-bright:#15b85a;
+  --blue:#0d3a8a;--blue-bright:#1e5fd9;--blue-light:#e8eef9;
+  --red:#c5283d;--gold:#c79c1d;
+  --r:6px;--r2:10px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:'Archivo',sans-serif;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at top,rgba(16,185,129,0.06) 0%,transparent 60%),radial-gradient(ellipse at bottom right,rgba(14,165,233,0.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:42px 42px;background-position:-1px -1px;opacity:.18;pointer-events:none;z-index:0;mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%)}
 body>*{position:relative;z-index:1}
 
 #hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:200;background:rgba(8,13,20,0.85);backdrop-filter:blur(12px);gap:12px;flex-wrap:wrap}
@@ -991,7 +991,13 @@ window.leavePool=function(pid){
     showOv();
     await dr(`pools/${pid}/members/${CU.username}`);
     await dr(`tips/${pid}/${CU.username}`);
+    await dr(`extras/${pid}/${CU.username}`);
+    // Manually update cache
+    if(POOLS[pid]?.members)delete POOLS[pid].members[CU.username];
+    if(CP===pid){CP=null;MY_POOL=null;MY_COMP=null}
     hideOv();toast('Left pool','ok');
+    renderMyPools();
+    renderPoolSelector();
   });
 };
 
@@ -1076,7 +1082,10 @@ window.kickMember=function(un){
   showC('Remove Member?',`Kick ${u?.name||un} from the pool? Their tips will be deleted.`,async()=>{
     await dr(`pools/${CP}/members/${un}`);
     await dr(`tips/${CP}/${un}`);
+    await dr(`extras/${CP}/${un}`);
+    if(POOLS[CP]?.members)delete POOLS[CP].members[un];
     toast('Member removed','ok');
+    renderManagePool();
   });
 };
 window.doDeletePool=function(){
@@ -1085,8 +1094,14 @@ window.doDeletePool=function(){
     showOv();
     await dr('pools/'+CP);
     await dr('tips/'+CP);
+    await dr('extras/'+CP);
+    // Manually remove from local cache so UI refreshes immediately
+    delete POOLS[CP];
     hideOv();toast('Pool deleted','ok');
-    CP=null;showPage('pools');
+    CP=null;
+    MY_POOL=null;MY_COMP=null;
+    renderPoolSelector();
+    showPage('pools');
   });
 };
 
@@ -1115,7 +1130,25 @@ function renderTips(){
   const rnds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
   const tabs=document.getElementById('ttabs');tabs.innerHTML='';
   if(rnds.length>1){
-    if(!curRnd||!rnds.includes(curRnd))curRnd=rnds[0];
+    // If no round selected yet, pick the one with the next upcoming match (or most recent if all in past)
+    if(!curRnd||!rnds.includes(curRnd)){
+      const now=Date.now();
+      // For each round, find time of earliest unfinished match (or earliest match if all played)
+      const roundScore=rnds.map(rn=>{
+        const rms=matches.filter(m=>(m.round||'General')===rn);
+        const upcoming=rms.filter(m=>!m.result&&m.datetime).map(m=>new Date(m.datetime).getTime()).sort((a,b)=>a-b)[0];
+        const earliest=rms.map(m=>m.datetime?new Date(m.datetime).getTime():0).sort((a,b)=>a-b)[0];
+        return{rn,upcoming,earliest};
+      });
+      // Prefer the round with the nearest upcoming match
+      const withUpcoming=roundScore.filter(r=>r.upcoming).sort((a,b)=>a.upcoming-b.upcoming);
+      if(withUpcoming.length){curRnd=withUpcoming[0].rn}
+      else{
+        // All matches played — pick the most recent
+        const allDone=roundScore.filter(r=>r.earliest).sort((a,b)=>b.earliest-a.earliest);
+        curRnd=allDone[0]?.rn||rnds[0];
+      }
+    }
     rnds.forEach(rv=>{const b=document.createElement('button');b.className='tp'+(curRnd===rv?' active':'');b.textContent=rv;b.onclick=()=>{curRnd=rv;renderTips()};tabs.appendChild(b)});
   }else curRnd=rnds[0]||null;
   const vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
@@ -1596,11 +1629,12 @@ window.deleteComp=function(id){
       await dr(`comps/${id}/winnerOdds`);
       await dr(`comps/${id}/scorerOdds`);
       await dr(`comps/${id}`);
+      // Clear local cache immediately so UI updates without waiting for listener
+      delete COMPS[id];
       hideOv();
       toast('Comp deleted','ok');
-      if(adminComp===id)adminComp=Object.keys(COMPS).filter(x=>x!==id)[0]||null;
-      // Force re-render
-      renderCompsTab();
+      if(adminComp===id)adminComp=Object.keys(COMPS)[0]||null;
+      renderAdm();
     }catch(e){
       hideOv();
       toast('Delete failed: '+e.message,'err');
