@@ -208,6 +208,12 @@ jobs:
                         } else if (s.includes('third')) {
                           stage = 'knockout';
                           round = 'Third Place Playoff';
+                        } else if (s.includes('last_32') || s.includes('last_64')) {
+                          stage = 'knockout';
+                          round = 'Round of 32';
+                        } else if (s.includes('last_16')) {
+                          stage = 'knockout';
+                          round = 'Round of 16';
                         } else if (s.includes('final') || s.includes('quarter') || s.includes('semi') || s.includes('round_of') || s.includes('playoff') || s.includes('play_off')) {
                           stage = 'knockout';
                           round = mx.stage.replace(/_/g, ' ').toLowerCase().replace(/\\b\\w/g, c => c.toUpperCase());
@@ -238,8 +244,14 @@ jobs:
                         });
                         added++;
                       } else if (result && !existing.result) {
-                        // Existing match, new result — just update result fields
-                        await fbPatch('comps/' + compId + '/matches/' + apiId, { result, scoreH, scoreA });
+                        // Existing match, new result — update result and team names if they were TBD
+                        const patch = { result, scoreH, scoreA };
+                        if (existing.home === 'TBD' && home !== 'TBD') { patch.home = home; patch.away = away; patch.round = round; patch.stage = stage; }
+                        await fbPatch('comps/' + compId + '/matches/' + apiId, patch);
+                        updated++;
+                      } else if (!existing.result && existing.home === 'TBD' && home !== 'TBD') {
+                        // TBD match that now has real teams — update teams, round, stage
+                        await fbPatch('comps/' + compId + '/matches/' + apiId, { home, away, round, stage, datetime: localDt });
                         updated++;
                       } else {
                         skipped++;
