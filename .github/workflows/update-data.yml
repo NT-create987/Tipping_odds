@@ -205,6 +205,9 @@ jobs:
                         if (s.includes('group')) {
                           stage = 'group';
                           round = mx.group ? 'Group ' + mx.group.replace('GROUP_', '') : 'Group Stage';
+                        } else if (s.includes('third')) {
+                          stage = 'knockout';
+                          round = 'Third Place Playoff';
                         } else if (s.includes('final') || s.includes('quarter') || s.includes('semi') || s.includes('round_of') || s.includes('playoff') || s.includes('play_off')) {
                           stage = 'knockout';
                           round = mx.stage.replace(/_/g, ' ').toLowerCase().replace(/\\b\\w/g, c => c.toUpperCase());
