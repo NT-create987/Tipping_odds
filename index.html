@@ -1392,7 +1392,7 @@ function mCard(m,myTip,roundOpen=true){
   })();
   return`<div class="mc" ${_matchData}>
     <div class="mh">
-      <span class="mbdg ${ko?'ko':''}">${m.round||'General'}${ko?' · KO':''}</span>
+      <span class="mbdg ${ko?'ko':''}">${m.group?'Group '+m.group:m.round||'General'}${ko?' · KO':''}</span>
       <div class="mtb"><span class="mtl">🇦🇺 ${fmtL(m.datetime)}</span>${m.venue?`<span class="mtv">📍 ${fmtV(m.datetime,m.venue)}</span>`:''}</div>
       ${lk?'<span style="color:var(--muted2);font-size:11px">🔒</span>':''}
     </div>
@@ -2272,13 +2272,13 @@ function renderResTab(){
   html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:15px"><span>${selRn}</span></div>`;
   if(pend.length){
     html+=`<div class="slabel">Awaiting Result</div>`;
-    html+=pend.map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)}</div>
+    html+=pend.map(m=>`<div class="amr"><div class="amt">${m.group?`<span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Group ${m.group} · </span>`:''}${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)}</div>
       <div class="rbs"><button class="rb rh ${m.result==='H'?'ac':''}" onclick="setRes('${m.id}','H')">🏠 Home</button>${!isKO(m)?`<button class="rb rd ${m.result==='D'?'ac':''}" onclick="setRes('${m.id}','D')">🤝 Draw</button>`:''}<button class="rb ra ${m.result==='A'?'ac':''}" onclick="setRes('${m.id}','A')">✈ Away</button></div>
     </div>`).join('');
   }
   if(done.length){
     html+=`<div class="slabel" style="margin-top:18px">Completed</div>`;
-    html+=done.map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away} <span class="bdg gr" style="margin-left:6px">${m.scoreH!=null?m.scoreH:'?'}–${m.scoreA!=null?m.scoreA:'?'} ${rm[m.result]}</span></div><div class="amm">${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('');
+    html+=done.map(m=>`<div class="amr"><div class="amt">${m.group?`<span style="font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Group ${m.group} · </span>`:''}${m.home} vs ${m.away} <span class="bdg gr" style="margin-left:6px">${m.scoreH!=null?m.scoreH:'?'}–${m.scoreA!=null?m.scoreA:'?'} ${rm[m.result]}</span></div><div class="amm">${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('');
   }
   if(future.length){
     html+=`<div class="slabel" style="margin-top:18px">Not Yet Locked</div>`;
