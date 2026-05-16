@@ -40,6 +40,7 @@ body>*{position:relative;z-index:1}
 .uav{width:24px;height:24px;border-radius:50%;background:var(--green);color:var(--paper);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:'Archivo Black',sans-serif}
 
 .page{display:none;padding:14px;max-width:1080px;margin:0 auto;animation:fu .3s ease}
+#page-tips .ml{max-width:720px;margin:0 auto}
 .page.active{display:block}
 @keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
@@ -119,10 +120,10 @@ body>*{position:relative;z-index:1}
 .mtb{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
 .mtl{font-size:11px;color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:500}
 .mtv{font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
-.mb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:10px 12px}
+.mb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 10px}
 .tm{text-align:center}
-.tf{font-size:22px;margin-bottom:3px;line-height:1}
-.tn{font-weight:700;font-size:14px;color:var(--ink);line-height:1.2}
+.tf{font-size:22px;margin-bottom:2px;line-height:1}
+.tn{font-weight:800;font-size:22px;color:var(--ink);line-height:1.2}
 .tsub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
 .vc{text-align:center;padding:0 8px}
 .vt{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--muted2)}
@@ -466,8 +467,8 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   </div>
   <div class="trow">
     <button class="tp active" onclick="lbT('all',this)">Overall</button>
-    <button class="tp" onclick="lbT('group',this)">Group Stage</button>
-    <button class="tp" onclick="lbT('knockout',this)">Knockout</button>
+    <button class="tp" id="lb-tab-group" onclick="lbT('group',this)">Group Stage</button>
+    <button class="tp" id="lb-tab-knockout" onclick="lbT('knockout',this)">Knockout</button>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;padding:0 0 4px">
       <span style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700">Sort</span>
       <select id="lbSort" onchange="setLbSort(this.value)" style="background:var(--paper2);border:1px solid var(--line2);border-radius:6px;color:var(--ink);font-family:'Archivo',sans-serif;font-size:12px;padding:5px 9px;font-weight:600;cursor:pointer">
@@ -502,6 +503,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   <div class="ptitle" id="hist-title">My <span class="g">History</span></div>
   <div class="psub" id="hist-sub">Every tip you've made, match by match.</div>
   <div class="srow" id="hist-stats"></div>
+  <div id="hist-filter"></div>
   <div id="hist-list" style="display:flex;flex-direction:column;gap:7px"></div>
 </div>
 
@@ -533,7 +535,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <button class="tp" onclick="aTab('add',this)">Add Match</button>
     <button class="tp" onclick="aTab('imp',this)">Import API</button>
     <button class="tp" onclick="aTab('res',this)">Results</button>
-    <button class="tp" id="atab-grps" onclick="aTab('grps',this)">Groups</button>
+    
     <button class="tp" onclick="aTab('bonus',this)">Bonus Setup</button>
     <button class="tp" onclick="aTab('plyr',this)">All Players</button>
   </div>
@@ -569,7 +571,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
       </div>
       <div class="fr">
         <div class="fld"><label>Matchday / Round *</label><input type="text" id="ard" placeholder="e.g. Matchday 35 or Group A" list="existing-rounds" required><datalist id="existing-rounds"></datalist><div class="fhint">Required. Pick from existing or type a new one.</div></div>
-        <div class="fld"><label>Stage</label><select id="ast"><option value="group">Group/League</option><option value="knockout">Knockout (no draw)</option></select></div>
+        <div class="fld"><label>Stage</label><select id="ast"><option value="group">Group/Regular Season</option><option value="knockout">Knockout (no draw)</option></select><div class="fhint">For leagues: always Group/Regular Season.</div></div>
       </div>
       <div class="fr3">
         <div class="fld"><label>🏠 Home Odds (optional)</label><input type="number" id="aoh" step="0.01" min="1.01" placeholder="2.10" inputmode="decimal"></div>
@@ -727,6 +729,9 @@ let curPage='land';
 let curRnd=null;
 let lbMode='all';
 let lbSort='points';
+let histRndFilter=null;
+// Pending tip changes — keyed by matchId, value is selected pick. Saved together via Save button.
+let PENDING_TIPS={};
 let adminComp=null;      // admin's currently selected comp for editing
 
 // Live data caches
@@ -755,15 +760,22 @@ function calcMatchPts(match,pick,pool){
   const ko=match.stage==='knockout';
   if(ko){
     const sum=oH+oA;
-    if(pick==='H')return Math.round(100*oH/sum);
-    if(pick==='A')return Math.round(100*oA/sum);
+    // Round A first, give H = 100 - A so total is exactly 100
+    const a=Math.round(100*oA/sum);
+    const hh=100-a;
+    if(pick==='H')return hh;
+    if(pick==='A')return a;
     return 0;
   }
   if(!oD||oD<1.01)return 0;
   const sum=oH+oD+oA;
-  if(pick==='H')return Math.round(100*oH/sum);
-  if(pick==='D')return Math.round(100*oD/sum);
-  if(pick==='A')return Math.round(100*oA/sum);
+  // Round D and A, give H the remainder so total is exactly 100
+  const d=Math.round(100*oD/sum);
+  const a=Math.round(100*oA/sum);
+  const hh=100-d-a;
+  if(pick==='H')return hh;
+  if(pick==='D')return d;
+  if(pick==='A')return a;
   return 0;
 }
 // Implied probability still useful for display
@@ -971,11 +983,10 @@ function refreshContext(){
   // Show/hide Bonuses nav button
   const showBonuses=MY_POOL?.bonuses&&Object.values(MY_POOL.bonuses).some(v=>v);
   document.getElementById('nv-bonuses').style.display=showBonuses?'':'none';
-  // Show/hide nav based on comp type
-  const ct=compTypeOf(MY_COMP);
-  document.getElementById('nv-grp').style.display=(ct==='tournament'&&MY_COMP?.hasGroups)?'':'none';
-  document.getElementById('nv-bkt').style.display=(ct==='tournament'&&MY_COMP?.hasBracket)?'':'none';
-  document.getElementById('nv-stand').style.display=ct==='league'?'':'none';
+  // Hide Bracket/Groups/Standings from players entirely — admin sees via admin panel.
+  document.getElementById('nv-grp').style.display='none';
+  document.getElementById('nv-bkt').style.display='none';
+  document.getElementById('nv-stand').style.display='none';
   renderPoolSelector();
 
   // If on welcome page but pools exist, redirect
@@ -1227,23 +1238,33 @@ function renderTips(){
   // Add 'scroll' class if many rounds (leagues with 38 matchdays)
   if(rnds.length>8)tabs.classList.add('scroll');else tabs.classList.remove('scroll');
   if(rnds.length>1){
-    // If no round selected yet, pick the one with the next upcoming match (or most recent if all in past)
+    // Default round logic:
+    // 1. The latest matchday whose FIRST match has started, if any match in it is still pending
+    // 2. Otherwise, the next upcoming matchday
+    // 3. Otherwise, the last completed matchday
     if(!curRnd||!rnds.includes(curRnd)){
       const now=Date.now();
-      // For each round, find time of earliest unfinished match (or earliest match if all played)
-      const roundScore=rnds.map(rn=>{
+      const info=rnds.map(rn=>{
         const rms=matches.filter(m=>(m.round||'General')===rn);
-        const upcoming=rms.filter(m=>!m.result&&m.datetime).map(m=>new Date(m.datetime).getTime()).sort((a,b)=>a-b)[0];
-        const earliest=rms.map(m=>m.datetime?new Date(m.datetime).getTime():0).sort((a,b)=>a-b)[0];
-        return{rn,upcoming,earliest};
+        const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;
+        const latest=Math.max(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;
+        const hasStarted=earliest&&earliest<=now;
+        const hasPending=rms.some(m=>!m.result);
+        const allDone=rms.every(m=>m.result);
+        return{rn,earliest,latest,hasStarted,hasPending,allDone};
       });
-      // Prefer the round with the nearest upcoming match
-      const withUpcoming=roundScore.filter(r=>r.upcoming).sort((a,b)=>a.upcoming-b.upcoming);
-      if(withUpcoming.length){curRnd=withUpcoming[0].rn}
+      // Step 1: latest started round with at least one pending match
+      const startedPending=info.filter(r=>r.hasStarted&&r.hasPending).sort((a,b)=>b.earliest-a.earliest);
+      if(startedPending.length){curRnd=startedPending[0].rn}
       else{
-        // All matches played — pick the most recent
-        const allDone=roundScore.filter(r=>r.earliest).sort((a,b)=>b.earliest-a.earliest);
-        curRnd=allDone[0]?.rn||rnds[0];
+        // Step 2: next upcoming round
+        const upcoming=info.filter(r=>r.earliest&&r.earliest>now).sort((a,b)=>a.earliest-b.earliest);
+        if(upcoming.length){curRnd=upcoming[0].rn}
+        else{
+          // Step 3: last completed
+          const done=info.filter(r=>r.allDone).sort((a,b)=>b.latest-a.latest);
+          curRnd=done[0]?.rn||rnds[0];
+        }
       }
     }
     rnds.forEach(rv=>{
@@ -1296,6 +1317,7 @@ function getAllTipsForPool(poolId){
 }
 
 function mCard(m,myTip,roundOpen=true){
+  const _matchData='data-mid="'+m.id+'"';
   const lk=isLk(m),ko=isKO(m);
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
   const allTips=getAllTipsForPool(CP);
@@ -1368,7 +1390,7 @@ function mCard(m,myTip,roundOpen=true){
     if(ko_time&&ko_time<Date.now())return'<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Kick-off has passed — no odds were recorded</div>';
     return'<div style="padding:0 16px 14px;text-align:center;font-size:12px;color:var(--muted);font-style:italic">⏳ Odds will be available closer to kick-off</div>';
   })();
-  return`<div class="mc">
+  return`<div class="mc" ${_matchData}>
     <div class="mh">
       <span class="mbdg ${ko?'ko':''}">${m.round||'General'}${ko?' · KO':''}</span>
       <div class="mtb"><span class="mtl">🇦🇺 ${fmtL(m.datetime)}</span>${m.venue?`<span class="mtv">📍 ${fmtV(m.datetime,m.venue)}</span>`:''}</div>
@@ -1445,26 +1467,105 @@ window.setScorerPick=async function(player){
 };
 
 
-window.pTip=async function(mid,pick){
+window.pTip=function(mid,pick){
   if(!CU||!CP||!MY_COMP)return;
   const m=MY_COMP.matches?.[mid];
   if(!m||isLk(m)){toast('Match locked','err');return}
   if(!m.oddsH||m.oddsH<1.01){toast('No odds yet','err');return}
-  // Check round is open (all matches have odds)
   const allMatches=Object.values(MY_COMP.matches||{});
   if(!roundIsOpen(allMatches,m.round||'General')){toast('Round not open — waiting for all odds to be set','err');return}
-  showOv();
-  const pts=calcMatchPts(m,pick);
-  await ds(`tips/${CP}/${CU.username}/${mid}`,{pick,pts,ts:Date.now()});
-  hideOv();
-  const rm={H:'Home Win',D:'Draw',A:'Away Win'};
-  toast('Tip: '+rm[pick]+' · '+pts+' pts if correct','ok');
+  // Click same pick → deselect (remove pending and clear saved tip too)
+  const tips=getMyTips();
+  const currentSaved=tips[mid]?.pick;
+  const currentPending=PENDING_TIPS[mid];
+  const effective=currentPending||currentSaved;
+  if(effective===pick){
+    // Toggle off
+    delete PENDING_TIPS[mid];
+    if(currentSaved){
+      // Mark for deletion: store special value
+      PENDING_TIPS[mid]='__DELETE__';
+    }
+  }else{
+    PENDING_TIPS[mid]=pick;
+  }
+  updateSaveBar();
+  // Re-render just this card visually without re-rendering everything (no scroll jump)
+  redrawMatchCard(mid);
 };
+// Save bar update + redraw
+function redrawMatchCard(mid){
+  const m=MY_COMP?.matches?.[mid];if(!m)return;
+  // Find existing card by data attribute and replace it
+  const wrapper=document.querySelector(`[data-mid="${mid}"]`);
+  if(!wrapper)return;
+  const tips=getMyTips();
+  const myTip=tips[mid];
+  // Apply pending pick if exists
+  let tipForRender=myTip;
+  if(PENDING_TIPS[mid]==='__DELETE__'){tipForRender=null}
+  else if(PENDING_TIPS[mid]){tipForRender={...(myTip||{}),pick:PENDING_TIPS[mid],_pending:true}}
+  // Need to know if round is open
+  const allMatches=Object.values(MY_COMP.matches||{});
+  const roundOpen=roundIsOpen(allMatches,m.round||'General');
+  wrapper.outerHTML=mCard(m,tipForRender,roundOpen);
+}
+// Floating save bar at the bottom of Tips page
+function updateSaveBar(){
+  const count=Object.keys(PENDING_TIPS).length;
+  let bar=document.getElementById('saveBar');
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='saveBar';
+    bar.style.cssText='position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:var(--paper);border:2px solid var(--green);border-radius:24px;padding:8px 14px;display:flex;gap:8px;align-items:center;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:300;font-size:13px;font-weight:600';
+    bar.innerHTML='<span id="saveBarCount"></span><button class="btn bg-grn bsm" id="saveBarBtn">💾 Save Tips</button><button class="btn bgh bsm" onclick="cancelPending()">Cancel</button>';
+    document.body.appendChild(bar);
+    document.getElementById('saveBarBtn').onclick=savePendingTips;
+  }
+  if(count===0){bar.style.display='none';return}
+  bar.style.display='flex';
+  document.getElementById('saveBarCount').textContent=count+' unsaved tip'+(count!==1?'s':'');
+}
+window.cancelPending=function(){
+  PENDING_TIPS={};updateSaveBar();renderTips();
+};
+async function savePendingTips(){
+  const tipsToSave=Object.entries(PENDING_TIPS);
+  if(!tipsToSave.length)return;
+  const btn=document.getElementById('saveBarBtn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  try{
+    for(const[mid,pick]of tipsToSave){
+      const m=MY_COMP.matches[mid];if(!m)continue;
+      if(pick==='__DELETE__'){
+        await dr(`tips/${CP}/${CU.username}/${mid}`);
+      }else{
+        const pts=calcMatchPts(m,pick,MY_POOL);
+        await ds(`tips/${CP}/${CU.username}/${mid}`,{pick,pts,ts:Date.now()});
+      }
+    }
+    PENDING_TIPS={};
+    updateSaveBar();
+    toast('✓ '+tipsToSave.length+' tip'+(tipsToSave.length!==1?'s':'')+' saved','ok');
+  }catch(e){
+    toast('Save failed: '+e.message,'err');
+    if(btn){btn.disabled=false;btn.textContent='💾 Save Tips'}
+  }
+}
 
 // ─── LEADERBOARD ────────────────────────
 function renderLB(){
   if(!MY_POOL||!MY_COMP){document.getElementById('lb-body').innerHTML='<tr><td colspan="6"><div class="emp"><p>No active pool</p></div></td></tr>';return}
   document.getElementById('lb-sub').textContent=MY_POOL.name+' · '+MY_COMP.name;
+  // Show/hide Group Stage + Knockout tabs — only relevant for tournament comps
+  const _lbCt=compTypeOf(MY_COMP);
+  const _isTourney=_lbCt==='tournament';
+  document.getElementById('lb-tab-group').style.display=_isTourney?'':'none';
+  document.getElementById('lb-tab-knockout').style.display=_isTourney?'':'none';
+  if(!_isTourney&&(lbMode==='group'||lbMode==='knockout')){
+    lbMode='all';
+    document.querySelectorAll('#page-lb .trow .tp').forEach((b,i)=>b.classList.toggle('active',i===0));
+  }
   const matches=MY_COMP.matches?Object.values(MY_COMP.matches):[];
   const members=Object.keys(MY_POOL.members||{});
   const allTips=getAllTipsForPool(CP);
@@ -1506,8 +1607,17 @@ function renderLB(){
     </tr>`).join('')||'<tr><td colspan="6"><div class="emp"><div class="ei">🏆</div><p>No players yet</p></div></td></tr>';
 }
 window.lbT=function(m,btn){lbMode=m;document.querySelectorAll('#page-lb .tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLB()};
+// Clear pending tips warning if any when navigating away
+function clearPendingOnNav(){
+  if(Object.keys(PENDING_TIPS).length){
+    if(!confirm('You have '+Object.keys(PENDING_TIPS).length+' unsaved tips. Discard them?'))return false;
+    PENDING_TIPS={};updateSaveBar();
+  }
+  return true;
+}
 window.setLbSort=function(s){lbSort=s;renderLB()};
-window.viewH=function(un){renderHist(un);showPage('hist')};
+window.viewH=function(un){histRndFilter=null;renderHist(un);showPage('hist')};
+window.setHistFilter=function(rn){histRndFilter=rn;const un=document.getElementById('hist-title').dataset.un;renderHist(un)};
 
 function renderHist(un){
   if(!un||!MY_POOL||!MY_COMP)return;
@@ -1523,7 +1633,9 @@ function renderHist(un){
   if(MY_POOL?.bonuses?.winner&&ex.winner&&MY_COMP?.tournamentWinner===ex.winner&&ex.winnerOdds)pts+=bonusPickPts(ex.winnerOdds);
   if(MY_POOL?.bonuses?.scorer&&ex.scorer&&MY_COMP?.topScorer===ex.scorer&&ex.scorerOdds)pts+=bonusPickPts(ex.scorerOdds);
   const isMe=un===CU?.username;
-  document.getElementById('hist-title').innerHTML=isMe?'My <span class="g">History</span>':(u?.name||un)+"'s <span class=\"b\">History</span>";
+  const histTitleEl=document.getElementById('hist-title');
+  histTitleEl.dataset.un=un;
+  histTitleEl.innerHTML=isMe?'My <span class="g">History</span>':(u?.name||un)+"'s <span class=\"b\">History</span>";
   document.getElementById('hist-sub').textContent=MY_POOL.name+' · '+MY_COMP.name;
   // Calculate longest correct-tip streak (chronological order)
   const chrono=[...ms].sort((a,b)=>new Date(a.datetime)-new Date(b.datetime)).filter(m=>m.result&&mt[m.id]);
@@ -1536,30 +1648,52 @@ function renderHist(un){
     <div class="sbox b"><div class="slbl">Best Streak</div><div class="sval bl">${maxStr}</div></div>`;
   const el=document.getElementById('hist-list');
 
-  // Split into pending and completed
-  const pending=ms.filter(m=>!m.result&&mt[m.id]);
-  const completed=ms.filter(m=>m.result);
-  let html='';
-  if(pending.length){
-    html+=`<div class="slabel" style="margin-bottom:10px;margin-top:8px">⏱ Awaiting Results · ${pending.length}</div>`;
-    html+=pending.map(m=>{
-      const t=mt[m.id];
-      return`<div class="hi"><div><div class="hm">${m.home} vs ${m.away}</div><div class="hs">${m.round||''} · ${fmtL(m.datetime)}</div></div><div style="text-align:right"><span class="bdg bl">${rm[t.pick]}</span><div class="hpts pend" style="margin-top:3px">Pending</div></div></div>`;
-    }).join('');
+  // Group by round, preserving pending/completed split
+  const ct=compTypeOf(MY_COMP);
+  const involved=ms.filter(m=>mt[m.id]||m.result);
+  if(!involved.length){
+    el.innerHTML='<div class="emp"><div class="ei">📋</div><p>No tips yet</p></div>';
+    return;
   }
-  if(completed.length){
-    html+=`<div class="slabel" style="margin:18px 0 10px">✓ Results · ${completed.filter(m=>mt[m.id]&&mt[m.id].pick===m.result).length}/${completed.filter(m=>mt[m.id]).length} correct</div>`;
-    html+=completed.map(m=>{
+  const groups={};
+  involved.forEach(m=>{const r=m.round||'General';(groups[r]=groups[r]||[]).push(m)});
+  // Sort matches within each round chronologically (newest first to surface latest)
+  Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(b.datetime||0)-new Date(a.datetime||0)));
+  const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
+  // For history, show latest rounds first (reverse order)
+  rounds.reverse();
+  // Round filter chips
+  const filterEl=document.getElementById('hist-filter');
+  if(filterEl){
+    filterEl.innerHTML='<div class="trow scroll" style="border:none;margin-bottom:8px">'
+      +['All',...rounds].map(r=>`<button class="tp${(r==='All'?!histRndFilter:histRndFilter===r)?' active':''}" onclick="setHistFilter(${r==='All'?'null':"'"+r.replace(/'/g,"\\'")+"'"})">  ${r}</button>`).join('')
+      +'</div>';
+  }
+  // Apply filter
+  const visibleRounds=histRndFilter?rounds.filter(r=>r===histRndFilter):rounds;
+  let html='';
+  for(const rn of visibleRounds){
+    const rms=groups[rn];
+    const tipped=rms.filter(m=>mt[m.id]).length;
+    const correct=rms.filter(m=>mt[m.id]&&mt[m.id].pick===m.result).length;
+    const totalDone=rms.filter(m=>m.result&&mt[m.id]).length;
+    const pendingCount=rms.filter(m=>!m.result&&mt[m.id]).length;
+    let summary='';
+    if(totalDone)summary+=`<span style="color:var(--green);font-weight:600">${correct}/${totalDone}</span>`;
+    if(pendingCount)summary+=(summary?' · ':'')+`<span style="color:var(--blue)">${pendingCount} pending</span>`;
+    html+=`<div style="margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px"><span>${rn}</span><span style="font-size:11px;font-weight:500">${summary}</span></div>`;
+    html+=rms.map(m=>{
       const t=mt[m.id];
       let cls='pend',lbl='—',bdg='';
-      if(!t){bdg=`<span class="bdg gy">No tip</span>`;lbl='0 pts';cls='lost'}
-      else if(t.pick===m.result){bdg=`<span class="bdg gr">✓ ${rm[t.pick]}</span>`;lbl='+'+(tipPoints(m,t,MY_POOL,getAllExtrasForPool(CP)[un]||{}))+' pts';cls='won'}
+      if(!t&&m.result){bdg=`<span class="bdg gy">No tip</span>`;lbl='0 pts';cls='lost'}
+      else if(!t)return '';
+      else if(!m.result){bdg=`<span class="bdg bl">${rm[t.pick]}</span>`;lbl='Pending';cls='pend'}
+      else if(t.pick===m.result){bdg=`<span class="bdg gr">✓ ${rm[t.pick]}</span>`;lbl='+'+tipPoints(m,t,MY_POOL,ex)+' pts';cls='won'}
       else{bdg=`<span class="bdg rd">✗ ${rm[t.pick]} (was ${rm[m.result]})</span>`;lbl='0 pts';cls='lost'}
       const score=m.scoreH!=null&&m.scoreA!=null?` <span style="font-family:'JetBrains Mono',monospace;color:var(--ink2);font-weight:600;margin-left:6px">${m.scoreH}-${m.scoreA}</span>`:'';
-      return`<div class="hi" style="${cls==='won'?'background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.2)':''}"><div><div class="hm">${m.home} vs ${m.away}${score}</div><div class="hs">${m.round||''} · ${fmtL(m.datetime)}</div></div><div style="text-align:right">${bdg}<div class="hpts ${cls}" style="margin-top:3px">${lbl}</div></div></div>`;
+      return`<div class="hi" style="${cls==='won'?'background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.2)':''}"><div><div class="hm">${m.home} vs ${m.away}${score}</div><div class="hs">${fmtL(m.datetime)}</div></div><div style="text-align:right">${bdg}<div class="hpts ${cls}" style="margin-top:3px">${lbl}</div></div></div>`;
     }).join('');
   }
-  if(!html)html='<div class="emp"><div class="ei">📋</div><p>No tips yet</p></div>';
   el.innerHTML=html;
 }
 
@@ -1639,8 +1773,6 @@ function renderAdm(){
   if(!adminComp){const first=Object.keys(COMPS)[0];if(first)adminComp=first}
   autoLockNearRounds();
   const ct=compTypeOf(COMPS[adminComp]);
-  const grpsTab=document.getElementById('atab-grps');
-  if(grpsTab)grpsTab.style.display=ct==='tournament'?'':'none';
   // Populate matchday datalist for Add Match
   const dl=document.getElementById('existing-rounds');
   if(dl){
@@ -1725,7 +1857,7 @@ function renderLockedRounds(){
   const comp=COMPS[adminComp];
   if(!comp){el.innerHTML='<div class="emp"><p>No active comp</p></div>';return}
   const matches=comp.matches?Object.values(comp.matches):[];
-  const rounds=[...new Set(matches.map(m=>m.round||'General'))].sort(naturalCompare);
+  const rounds=[...new Set(matches.map(m=>m.round||'General'))].sort((a,b)=>roundCompare(a,b,compTypeOf(comp)));
   const locked=comp.lockedRounds||{};
   if(!rounds.length){el.innerHTML='<div class="emp"><p style="font-size:12px">No matches imported yet</p></div>';return}
   el.innerHTML=rounds.map(rn=>{
@@ -1860,11 +1992,19 @@ window.addMatch=async function(){
 };
 async function doAdd(home,away,dt,vc,rd,st,oh,od,oa){
   const id='m'+Date.now()+Math.random().toString(36).slice(2,5);
-  // If odds provided manually at creation, flag them
   const manualOdds=(oh&&oa)?true:false;
-  await ds(`comps/${adminComp}/matches/${id}`,{id,home,away,datetime:dt,venue:vc,round:rd,stage:st,oddsH:oh,oddsD:od,oddsA:oa,manualOdds,result:null,scoreH:null,scoreA:null,created:Date.now()});
+  const matchData={id,home,away,datetime:dt,venue:vc,round:rd,stage:st,oddsH:oh,oddsD:od,oddsA:oa,manualOdds,result:null,scoreH:null,scoreA:null,created:Date.now()};
+  await ds(`comps/${adminComp}/matches/${id}`,matchData);
+  // Immediately update local cache so it appears instantly
+  if(COMPS[adminComp]){
+    if(!COMPS[adminComp].matches)COMPS[adminComp].matches={};
+    COMPS[adminComp].matches[id]=matchData;
+  }
   ['ah','aa','adt','avc','aoh','aod','aoa'].forEach(f=>{const el=document.getElementById(f);if(el)el.value=''});
-  // Don't clear 'ard' so they can quickly add multiple matches to same round
+  // Re-render all affected views immediately (don't wait for Firebase listener)
+  renderManualOdds();
+  renderResTab();
+  refreshAllPages();
 }
 
 // Trigger GitHub Actions workflow remotely (uses server-side execution to bypass CORS)
@@ -2003,41 +2143,59 @@ function renderManualOdds(){
   const comp=COMPS[adminComp];
   if(!comp){el.innerHTML='<div class="emp"><p>No active comp selected</p></div>';return}
   const matches=comp.matches?Object.values(comp.matches):[];
-  // Only consider non-finished matches
   const upcoming=matches.filter(m=>!m.result);
   if(!upcoming.length){el.innerHTML='<div class="emp"><div class="ei">✓</div><p>All matches have results</p></div>';return}
-  // Group by round
   const groups={};
   upcoming.forEach(m=>{const r=m.round||'General';(groups[r]=groups[r]||[]).push(m)});
-  // Sort each round's matches chronologically
   Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
-  // Sort rounds in proper order
   const ct=compTypeOf(comp);
   const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
-  // For each round, check if it's urgent (within 7 days)
   const now=Date.now();
   const SEVEN=7*24*60*60*1000;
-  let html='';
+  // Build round status map
+  const roundStatus={};
   for(const rn of rounds){
     const rms=groups[rn];
-    const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0));
-    const isUrgent=earliest&&(earliest-now)<=SEVEN;
+    const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;
     const allHaveOdds=rms.every(m=>m.oddsH&&m.oddsH>=1.01&&m.oddsA&&m.oddsA>=1.01&&(isKO(m)||(m.oddsD&&m.oddsD>=1.01)));
-    const missingCount=rms.filter(m=>!m.oddsH||m.oddsH<1.01).length;
-    const statusBadge=allHaveOdds?'<span class="bdg gr">✓ All odds in</span>':(isUrgent?`<span class="bdg" style="background:rgba(197,40,61,0.15);color:var(--red)">⚠ ${missingCount} missing</span>`:`<span class="bdg gy">${missingCount} missing</span>`);
-    html+=`<div style="margin-top:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px"><span>${rn}</span>${statusBadge}<span style="color:var(--muted);font-size:11px;font-weight:500">${earliest?'first: '+fmtL(new Date(earliest).toISOString()):''}</span></div>`;
-    for(const m of rms){
-      const has=m.oddsH&&m.oddsH>=1.01;
-      const dt=m.datetime?new Date(m.datetime).getTime():0;
-      const isUrgentMatch=isUrgent&&!has;
-      const rowStyle=isUrgentMatch?'border-color:var(--red);background:rgba(197,40,61,0.04)':'';
-      const oddsText=has?`H ${(+m.oddsH).toFixed(2)} · D ${m.oddsD?(+m.oddsD).toFixed(2):'-'} · A ${(+m.oddsA).toFixed(2)}`:'<em style="color:var(--red)">No odds yet</em>';
-      const manualTag=m.manualOdds?' <span class="bdg go" style="font-size:9px">MANUAL</span>':'';
-      html+=`<div class="amr" style="${rowStyle}"><div class="amt">${m.home} vs ${m.away}${manualTag}</div><div class="amm">${fmtL(m.datetime)}${m.venue?' · '+m.venue:''}</div><div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace">${oddsText}</div><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn ${has?'bgh':'bg-grn'} bsm" onclick="setOdds('${m.id}')">${has?'✏ Edit Odds':'💰 Set Odds'}</button><button class="btn bd bsm" onclick="delMatch('${m.id}')">🗑</button></div></div>`;
-    }
+    const missing=rms.filter(m=>!m.oddsH||m.oddsH<1.01).length;
+    const isUrgent=earliest&&(earliest-now)<=SEVEN;
+    roundStatus[rn]={earliest,allHaveOdds,missing,isUrgent};
+  }
+  // Default selected round: nearest urgent missing → next upcoming missing → first
+  if(!window.__moRnd||!rounds.includes(window.__moRnd)){
+    const urgentMissing=rounds.filter(r=>roundStatus[r].isUrgent&&!roundStatus[r].allHaveOdds);
+    const upcomingMissing=rounds.filter(r=>!roundStatus[r].allHaveOdds);
+    window.__moRnd=urgentMissing[0]||upcomingMissing[0]||rounds[0];
+  }
+  // Selector chips at top
+  let html='<div class="trow scroll" style="margin-bottom:12px;border:none">';
+  for(const rn of rounds){
+    const st=roundStatus[rn];
+    let icon='';
+    if(st.allHaveOdds)icon='<span style="color:var(--green);margin-right:4px">✓</span>';
+    else if(st.isUrgent)icon='<span style="color:var(--red);margin-right:4px">⚠</span>';
+    else icon='<span style="color:var(--muted);margin-right:4px">○</span>';
+    const isActive=rn===window.__moRnd;
+    html+=`<button class="tp ${isActive?'active':''}" onclick="selectMoRound('${rn.replace(/'/g,"\\'")}')">${icon}${rn}</button>`;
+  }
+  html+='</div>';
+  // Show matches for selected round
+  const selRn=window.__moRnd;
+  const selRms=groups[selRn]||[];
+  const selStatus=roundStatus[selRn]||{};
+  html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:15px"><span>${selRn}</span>${selStatus.allHaveOdds?'<span class="bdg gr">✓ All odds in</span>':selStatus.isUrgent?`<span class="bdg" style="background:rgba(197,40,61,0.15);color:var(--red)">⚠ ${selStatus.missing} missing</span>`:`<span class="bdg gy">${selStatus.missing} missing</span>`}</div>`;
+  for(const m of selRms){
+    const has=m.oddsH&&m.oddsH>=1.01;
+    const isUrgentMatch=selStatus.isUrgent&&!has;
+    const rowStyle=isUrgentMatch?'border-color:var(--red);background:rgba(197,40,61,0.04)':'';
+    const oddsText=has?`H ${(+m.oddsH).toFixed(2)} · D ${m.oddsD?(+m.oddsD).toFixed(2):'-'} · A ${(+m.oddsA).toFixed(2)}`:'<em style="color:var(--red)">No odds yet</em>';
+    const manualTag=m.manualOdds?' <span class="bdg go" style="font-size:9px">MANUAL</span>':'';
+    html+=`<div class="amr" style="${rowStyle}"><div class="amt">${m.home} vs ${m.away}${manualTag}</div><div class="amm">${fmtL(m.datetime)}${m.venue?' · '+m.venue:''}</div><div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace">${oddsText}</div><div style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn ${has?'bgh':'bg-grn'} bsm" onclick="setOdds('${m.id}')">${has?'✏ Edit Odds':'💰 Set Odds'}</button>${m.manualOdds?`<button class="btn bgh bsm" onclick="undoManualOdds('${m.id}')" title="Allow API to update">↺ Undo manual</button>`:''}<button class="btn bd bsm" onclick="delMatch('${m.id}')">🗑</button></div></div>`;
   }
   el.innerHTML=html;
 }
+window.selectMoRound=function(rn){window.__moRnd=rn;renderManualOdds()};
 
 // Update setOdds to set a manualOdds=true flag so the workflow won't overwrite
 window.setOdds=async function(mid){
@@ -2051,6 +2209,13 @@ window.setOdds=async function(mid){
   toast('Odds set','ok');
   renderManualOdds();
 };
+// Reset manualOdds flag — API can now overwrite these odds
+window.undoManualOdds=async function(mid){
+  if(!adminComp)return;
+  await du(`comps/${adminComp}/matches/${mid}`,{manualOdds:false});
+  toast('Manual flag cleared — API can update these odds again','ok');
+  renderManualOdds();
+};
 
 function renderUpcoming(){/* deprecated — replaced by renderManualOdds */}
 
@@ -2058,42 +2223,70 @@ function renderResTab(){
   const comp=COMPS[adminComp];
   if(!comp){document.getElementById('a-reslist').innerHTML='<div class="emp"><p>No active comp</p></div>';return}
   const matches=comp.matches?Object.values(comp.matches):[];
+  if(!matches.length){document.getElementById('a-reslist').innerHTML='<div class="emp"><p>No matches yet</p></div>';return}
   const ct=compTypeOf(comp);
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
-  // Group by round and sort by round order
-  function groupByRound(arr){
-    const g={};
-    arr.forEach(m=>{const r=m.round||'General';(g[r]=g[r]||[]).push(m)});
-    Object.keys(g).forEach(r=>g[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
-    return g;
+  // A match is "ready for result" if time-locked OR its round is admin-locked in Firebase
+  const lockedRounds=comp.lockedRounds||{};
+  const isRndLk=rn=>!!lockedRounds[(rn||'General').replace(/[.#$\[\]/]/g,'_')];
+  const isLkRes=m=>!!m.result||isLk(m)||isRndLk(m.round||'General');
+  // Group ALL matches by round
+  const groups={};
+  matches.forEach(m=>{const r=m.round||'General';(groups[r]=groups[r]||[]).push(m)});
+  Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
+  const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
+  // Default selected: round with pending results (time-locked or admin-locked), otherwise first
+  const now=Date.now();
+  if(!window.__resRnd||!rounds.includes(window.__resRnd)){
+    const startedPending=rounds.filter(rn=>{
+      const rms=groups[rn];
+      const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;
+      const hasStarted=(earliest&&earliest<=now)||isRndLk(rn);
+      const hasPending=rms.some(m=>!m.result&&isLkRes(m));
+      return hasStarted&&hasPending;
+    });
+    if(startedPending.length)window.__resRnd=startedPending[startedPending.length-1];
+    else window.__resRnd=rounds[0];
   }
-  const pend=matches.filter(m=>!m.result&&isLk(m));
-  const done=matches.filter(m=>m.result);
-  const pendG=groupByRound(pend);
-  const doneG=groupByRound(done);
-  const pendRnds=Object.keys(pendG).sort((a,b)=>roundCompare(a,b,ct));
-  const doneRnds=Object.keys(doneG).sort((a,b)=>roundCompare(a,b,ct));
-  const el=document.getElementById('a-reslist');
-  let html='';
+  // Selector chips at top
+  let html='<div class="trow scroll" style="margin-bottom:12px;border:none">';
+  for(const rn of rounds){
+    const rms=groups[rn];
+    const pendCount=rms.filter(m=>!m.result&&isLkRes(m)).length;
+    const doneCount=rms.filter(m=>m.result).length;
+    let icon='';
+    if(doneCount===rms.length)icon='<span style="color:var(--green);margin-right:4px">✓</span>';
+    else if(pendCount>0)icon='<span style="color:var(--gold);margin-right:4px">⏳</span>';
+    else icon='<span style="color:var(--muted);margin-right:4px">○</span>';
+    const isActive=rn===window.__resRnd;
+    html+=`<button class="tp ${isActive?'active':''}" onclick="selectResRound('${rn.replace(/'/g,"\\'")}')">${icon}${rn}</button>`;
+  }
+  html+='</div>';
+  // Show matches for selected round
+  const selRn=window.__resRnd;
+  const selRms=groups[selRn]||[];
+  const pend=selRms.filter(m=>!m.result&&isLkRes(m));
+  const done=selRms.filter(m=>m.result);
+  const future=selRms.filter(m=>!m.result&&!isLkRes(m));
+  html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700;font-size:15px"><span>${selRn}</span></div>`;
   if(pend.length){
     html+=`<div class="slabel">Awaiting Result</div>`;
-    for(const rn of pendRnds){
-      html+=`<div style="font-weight:700;font-size:13px;margin:10px 0 6px;color:var(--ink2)">${rn}</div>`;
-      html+=pendG[rn].map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)}</div>
-        <div class="rbs"><button class="rb rh ${m.result==='H'?'ac':''}" onclick="setRes('${m.id}','H')">🏠 Home</button>${!isKO(m)?`<button class="rb rd ${m.result==='D'?'ac':''}" onclick="setRes('${m.id}','D')">🤝 Draw</button>`:''}<button class="rb ra ${m.result==='A'?'ac':''}" onclick="setRes('${m.id}','A')">✈ Away</button></div>
-      </div>`).join('');
-    }
+    html+=pend.map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)}</div>
+      <div class="rbs"><button class="rb rh ${m.result==='H'?'ac':''}" onclick="setRes('${m.id}','H')">🏠 Home</button>${!isKO(m)?`<button class="rb rd ${m.result==='D'?'ac':''}" onclick="setRes('${m.id}','D')">🤝 Draw</button>`:''}<button class="rb ra ${m.result==='A'?'ac':''}" onclick="setRes('${m.id}','A')">✈ Away</button></div>
+    </div>`).join('');
   }
   if(done.length){
     html+=`<div class="slabel" style="margin-top:18px">Completed</div>`;
-    for(const rn of doneRnds){
-      html+=`<div style="font-weight:700;font-size:13px;margin:10px 0 6px;color:var(--ink2)">${rn}</div>`;
-      html+=doneG[rn].map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away} <span class="bdg gr" style="margin-left:6px">${m.scoreH??'?'}–${m.scoreA??'?'} ${rm[m.result]}</span></div><div class="amm">${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('');
-    }
+    html+=done.map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away} <span class="bdg gr" style="margin-left:6px">${m.scoreH!=null?m.scoreH:'?'}–${m.scoreA!=null?m.scoreA:'?'} ${rm[m.result]}</span></div><div class="amm">${fmtL(m.datetime)}</div><button class="btn bgh bsm" onclick="fixRes('${m.id}')">✏ Correct</button></div>`).join('');
   }
-  if(!pend.length&&!done.length)html='<div class="emp"><div class="ei">⏳</div><p>No locked matches yet</p></div>';
-  el.innerHTML=html;
+  if(future.length){
+    html+=`<div class="slabel" style="margin-top:18px">Not Yet Locked</div>`;
+    html+=future.map(m=>`<div class="amr"><div class="amt">${m.home} vs ${m.away}</div><div class="amm">${fmtL(m.datetime)} · ${isLk(m)?'locked':'unlocked'}</div></div>`).join('');
+  }
+  if(!pend.length&&!done.length&&!future.length)html+='<div class="emp"><p>No matches in this round</p></div>';
+  document.getElementById('a-reslist').innerHTML=html;
 }
+window.selectResRound=function(rn){window.__resRnd=rn;renderResTab()};
 window.setRes=function(mid,result){
   const m=COMPS[adminComp]?.matches?.[mid];if(!m)return;
   const rm={H:'Home Win',D:'Draw',A:'Away Win'};
@@ -2231,22 +2424,26 @@ window.importWinnerOdds=async function(){
     if(!r.ok){hideOv();const t=await r.text();toast('API error: '+(t.includes('UNKNOWN_SPORT')?'sport not active yet':r.status),'err');return}
     const data=await r.json();
     if(!Array.isArray(data)||!data.length){hideOv();toast('No outright markets available','info');return}
-    // Find a tournament-winner market — usually the first event
+    // Find a tournament-winner market — search all events and all bookmakers
     let added=0;
     for(const ev of data){
-      const bk=ev.bookmakers?.[0];if(!bk)continue;
-      const market=bk.markets.find(m=>m.key==='outrights');if(!market)continue;
+      let market=null;
+      for(const bk of ev.bookmakers||[]){
+        market=bk.markets.find(m=>m.key==='outrights');
+        if(market)break;
+      }
+      if(!market)continue;
       for(const o of market.outcomes||[]){
         if(o.name&&o.price>=1.01){
           await ds(`comps/${adminComp}/winnerOdds/${safeKey(o.name)}`,o.price);
           added++;
         }
       }
-      break; // only first event (the tournament outright market)
+      if(added>0)break; // stop after first event that had outcomes
     }
     hideOv();
-    toast('Imported '+added+' teams. Edit/delete as needed, then Lock.','ok');
-    renderBonusAdmin();
+    if(added>0){toast('Imported '+added+' teams. Edit/delete as needed, then Lock.','ok');renderBonusAdmin();}
+    else toast('No outright winner market found — the market may not be open yet for this competition.','info');
   }catch(e){hideOv();toast('Import failed: '+e.message,'err')}
 };
 
@@ -2341,29 +2538,83 @@ window.setTopScorer=async function(){
 
 // ─── BONUSES PAGE (player-facing) ────────────────────────
 function renderBonuses(){
-  if(!MY_POOL||!MY_COMP){document.getElementById('bonuses-content').innerHTML='<div class="emp"><p>Select a pool</p></div>';return}
+  if(!CU||!MY_POOL||!MY_COMP){
+    document.getElementById('bonuses-content').innerHTML='<div class="emp"><p>Select a pool first</p></div>';
+    return;
+  }
   const b=MY_POOL.bonuses||{};
   const ex=getMyExtras();
-  document.getElementById('bonuses-sub').textContent=MY_POOL.name+' · '+MY_COMP.name;
   const matches=MY_COMP.matches?Object.values(MY_COMP.matches):[];
-  const started=matches.some(m=>isLk(m));
-  const winnerOdds=MY_COMP.winnerOdds||{};
-  const scorerOdds=MY_COMP.scorerOdds||{};
   let html='';
-
+  if(!Object.values(b).some(v=>v)){
+    document.getElementById('bonuses-content').innerHTML='<div class="emp"><p>No bonuses active in this pool</p></div>';
+    return;
+  }
+  // === Order: WINNER + SCORER first (more interesting), then JOKER, then KO multiplier info ===
+  if(b.winner){
+    const winnerOdds=MY_COMP.winnerOdds||{};
+    const compStarted=matches.some(m=>m.datetime&&new Date(m.datetime).getTime()<Date.now());
+    const myPick=ex.winner;
+    html+=`<div class="card" style="margin-bottom:14px">
+      <div class="slabel">🏆 Overall Winner</div>`;
+    if(myPick){
+      html+=`<p style="font-size:14px;margin:8px 0">Your pick: <strong>${myPick}</strong> · Bonus if correct: <strong>${bonusPickPts(ex.winnerOdds||1)} pts</strong></p>`;
+      if(!compStarted)html+=`<button class="btn bgh bsm" onclick="clearWinnerPick()">Change pick</button>`;
+      else html+=`<p style="font-size:12px;color:var(--muted)">Locked since the first match has started.</p>`;
+    }else if(compStarted){
+      html+=`<p style="font-size:13px;color:var(--muted)">Picks locked once the first match starts. No pick = no bonus.</p>`;
+    }else if(!Object.keys(winnerOdds).length){
+      html+=`<p style="font-size:13px;color:var(--muted)">Admin hasn't added teams yet.</p>`;
+    }else{
+      html+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Pick who wins. Lock in before the first match.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+      const sortedTeams=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
+      sortedTeams.forEach(([key,o])=>{
+        const teamName=key.replace(/_/g,' ');
+        html+=`<button class="btn bgh bsm" onclick="confirmWinnerPick('${teamName}',${o})">${teamName} <span style="color:var(--muted2);font-size:10px;margin-left:4px">${bonusPickPts(o)} pts</span></button>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
+  if(b.scorer){
+    const scorerOdds=MY_COMP.scorerOdds||{};
+    const compStarted=matches.some(m=>m.datetime&&new Date(m.datetime).getTime()<Date.now());
+    const myPick=ex.scorer;
+    html+=`<div class="card" style="margin-bottom:14px">
+      <div class="slabel">⚽ Top Scorer</div>`;
+    if(myPick){
+      html+=`<p style="font-size:14px;margin:8px 0">Your pick: <strong>${myPick}</strong> · Bonus if correct: <strong>${bonusPickPts(ex.scorerOdds||1)} pts</strong></p>`;
+      if(!compStarted)html+=`<button class="btn bgh bsm" onclick="clearScorerPick()">Change pick</button>`;
+      else html+=`<p style="font-size:12px;color:var(--muted)">Locked since the first match has started.</p>`;
+    }else if(compStarted){
+      html+=`<p style="font-size:13px;color:var(--muted)">Picks locked once the first match starts.</p>`;
+    }else if(!Object.keys(scorerOdds).length){
+      html+=`<p style="font-size:13px;color:var(--muted)">Admin hasn't added players yet.</p>`;
+    }else{
+      html+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px">Pick who wins the Golden Boot.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">`;
+      const sortedScorers=Object.entries(scorerOdds).sort((a,b)=>a[1]-b[1]);
+      sortedScorers.forEach(([key,o])=>{
+        const playerName=key.replace(/_/g,' ');
+        html+=`<button class="btn bgh bsm" onclick="confirmScorerPick('${playerName}',${o})">${playerName} <span style="color:var(--muted2);font-size:10px;margin-left:4px">${bonusPickPts(o)} pts</span></button>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  }
   if(b.joker){
     const myJokers=ex.jokerByRound||{};
     const ct=compTypeOf(MY_COMP);
-    // For leagues: all rounds. For tournaments: only group-stage rounds.
     const eligibleRounds={};
     matches.forEach(m=>{
       const ok=(ct==='league')||(ct==='tournament'&&m.stage==='group');
       if(ok){const r=m.round||'General';(eligibleRounds[r]=eligibleRounds[r]||[]).push(m)}
     });
-    const roundList=Object.keys(eligibleRounds).sort(naturalCompare);
+    const roundList=Object.keys(eligibleRounds).sort((a,b)=>roundCompare(a,b,ct));
     html+=`<div class="card" style="margin-bottom:14px">
       <div class="slabel">🎴 Joker — One Per ${ct==='league'?'Matchday':'Round'}</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.55">${ct==='league'?'Each matchday':'Each group round'}, you can play one joker on a single match to <strong>double your points</strong> if correct. Pick from the Tips page. You can move it as long as the match hasn't kicked off yet.</p>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.55">Each ${ct==='league'?'matchday':'round'}, you can play one joker on a single match to <strong>double your points</strong> if correct. Pick from the Tips page.</p>
       ${roundList.length?roundList.map(rn=>{
         const rk=safeRoundKey(rn);
         const jmid=myJokers[rk];
@@ -2382,37 +2633,6 @@ function renderBonuses(){
       <p style="font-size:13px;color:var(--muted);line-height:1.55">Knockout matches earn extra points: <strong>R32 / R16 / Quarter-final = 1.5×</strong> · <strong>Semi-final = 2×</strong> · <strong>Final = 3×</strong>. Stacks with Joker.</p>
     </div>`;
   }
-  if(b.winner){
-    const wList=Object.entries(winnerOdds).sort((a,b)=>a[1]-b[1]);
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">🏆 Overall Winner</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55">Pick who you think will win the whole tournament. ${started?'<strong style="color:var(--gold)">🔒 Locked — tournament has started</strong>':'Locks at the first kick-off.'} Longer-shot picks earn more points.</p>
-      ${ex.winner?`<p style="font-size:14px;margin-bottom:10px;padding:10px;background:var(--green-light);border-radius:var(--r);border:1px solid var(--green)">Your pick: <strong>${tF(ex.winner)} ${ex.winner}</strong> · <span class="bdg gr">${bonusPickPts(ex.winnerOdds)} pts if correct</span></p>`:''}
-      ${!started&&wList.length?(()=>{
-        const totalInv=wList.reduce((s,[,o])=>s+1/o,0);
-        const norm=Object.fromEntries(wList.map(([t,o])=>[t,Math.round((1/o/totalInv)*100)]));
-        return `<select id="winner-pick" style="margin-bottom:10px"><option value="">Select team...</option>${wList.map(([t,o])=>`<option value="${t}" data-odds="${o}" ${ex.winner===t?'selected':''}>${tF(t)} ${t} · ${norm[t]}% chance · ${bonusPickPts(o)} pts</option>`).join('')}</select><button class="btn bg-grn bsm" onclick="confirmWinnerPick()">Save Pick</button>`;
-      })():''}
-      ${!wList.length?'<p style="font-size:12px;color:var(--muted)">Picks will be available once teams are added.</p>':''}
-    </div>`;
-  }
-  if(b.scorer){
-    const sList=Object.entries(scorerOdds).sort((a,b)=>a[1]-b[1]);
-    html+=`<div class="card" style="margin-bottom:14px">
-      <div class="slabel">⚽ Top Scorer</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55">Pick who you think will win the Golden Boot. ${started?'<strong style="color:var(--gold)">🔒 Locked — tournament has started</strong>':'Locks at the first kick-off.'} Longer-shot picks earn more points.</p>
-      ${ex.scorer?`<p style="font-size:14px;margin-bottom:10px;padding:10px;background:var(--green-light);border-radius:var(--r);border:1px solid var(--green)">Your pick: <strong>⚽ ${ex.scorer}</strong> · <span class="bdg gr">${bonusPickPts(ex.scorerOdds)} pts if correct</span></p>`:''}
-      ${!started&&sList.length?(()=>{
-        const totalInv=sList.reduce((s,[,o])=>s+1/o,0);
-        const norm=Object.fromEntries(sList.map(([p,o])=>[p,Math.round((1/o/totalInv)*100)]));
-        return `<select id="scorer-pick" style="margin-bottom:10px"><option value="">Select player...</option>${sList.map(([p,o])=>`<option value="${p}" data-odds="${o}" ${ex.scorer===p?'selected':''}>⚽ ${p} · ${norm[p]}% chance · ${bonusPickPts(o)} pts</option>`).join('')}</select><button class="btn bg-grn bsm" onclick="confirmScorerPick()">Save Pick</button>`;
-      })():''}
-      ${!sList.length?'<p style="font-size:12px;color:var(--muted)">Picks will be available once players are added.</p>':''}
-    </div>`;
-  }
-  // Note: Noise is intentionally NOT shown to players
-
-  if(!html)html='<div class="emp"><div class="ei">🎯</div><p>This pool has no bonus features.</p></div>';
   document.getElementById('bonuses-content').innerHTML=html;
 }
 
