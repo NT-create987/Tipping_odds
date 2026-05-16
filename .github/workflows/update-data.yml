@@ -198,13 +198,14 @@ jobs:
                       const dt = mx.utcDate;
                       const venue = mx.venue || '';
                       // Round/stage detection
-                      let round = 'Regular Season', stage = 'group';
+                      let round = 'Regular Season', stage = 'group', group = '';
                       if (mx.matchday) round = 'Matchday ' + mx.matchday;
                       if (mx.stage) {
                         const s = mx.stage.toLowerCase();
                         if (s.includes('group')) {
                           stage = 'group';
-                          round = mx.group ? 'Group ' + mx.group.replace('GROUP_', '') : 'Group Stage';
+                          group = mx.group ? mx.group.replace('GROUP_', '') : '';
+                          round = mx.matchday ? 'Matchday ' + mx.matchday : 'Group Stage';
                         } else if (s.includes('third')) {
                           stage = 'knockout';
                           round = 'Third Place Playoff';
@@ -238,7 +239,7 @@ jobs:
                       } else if (!existing) {
                         // Brand new match — full insert
                         await fbPatch('comps/' + compId + '/matches/' + apiId, {
-                          id: apiId, apiId, home, away, datetime: localDt, venue, round, stage,
+                          id: apiId, apiId, home, away, datetime: localDt, venue, round, stage, group,
                           oddsH: null, oddsD: null, oddsA: null,
                           result, scoreH, scoreA, created: Date.now()
                         });
