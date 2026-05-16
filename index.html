@@ -1840,6 +1840,7 @@ function tournamentRoundOrder(rn){
   if(r.includes('round of 16'))return 300;
   if(r.includes('quarter'))return 400;
   if(r.includes('semi'))return 500;
+  if(r.includes('third'))return 590;
   if(r.includes('final'))return 600;
   return 700;
 }
@@ -2330,16 +2331,58 @@ function renderGrpsAdmin(){
   const matches=comp.matches?Object.values(comp.matches):[];
   const teams=[...new Set(matches.filter(m=>m.stage==='group').flatMap(m=>[m.home,m.away]))].sort();
   const gls=['A','B','C','D','E','F','G','H','I','J','K','L'];
-  el.innerHTML=`<div class="ibox" style="margin-bottom:14px">Update standings after each matchday for the active comp.</div>
-  <div class="card"><div class="fr" style="margin-bottom:12px">
-    <div class="fld"><label>Group</label><select id="gag">${gls.map(g=>`<option value="group${g}">Group ${g}</option>`).join('')}</select></div>
-    <div class="fld"><label>Team</label><select id="gat"><option value="">Select team…</option>${teams.map(t=>`<option value="${t}">${tF(t)} ${t}</option>`).join('')}</select></div>
-  </div>
-  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
-    ${['P','W','D','L','GF','GA'].map(f=>`<div class="fld"><label>${f}</label><input type="number" id="gf${f.toLowerCase()}" min="0" value="0" inputmode="numeric"></div>`).join('')}
-  </div>
-  <button class="btn bg-grn" onclick="saveGRow()">Update Standing →</button></div>`;
+  // Show existing groups with delete buttons
+  const grps=comp.groups||{};
+  let existHtml='';
+  const sortedGrps=Object.entries(grps).sort((a,b)=>a[0].localeCompare(b[0]));
+  for(const[gk,gd]of sortedGrps){
+    const gName='Group '+gk.replace('group','');
+    const teamRows=gd.teams?Object.entries(gd.teams).sort((a,b)=>b[1].pts-a[1].pts||b[1].gd-a[1].gd):[];
+    existHtml+=`<div class="card" style="margin-bottom:12px;padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:13px">
+        <span>${gName}</span>
+        <button class="btn bd bsm" onclick="deleteGroup('${gk}')">🗑 Delete Group</button>
+      </div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);font-size:11px">${['Team','P','W','D','L','GD','Pts',''].map(h=>`<th style="padding:3px 5px;text-align:${h?'left':'center'}">${h}</th>`).join('')}</tr></thead>
+        <tbody>${teamRows.map(([tk,t])=>`<tr style="border-top:1px solid var(--line)">
+          <td style="padding:4px 5px;font-weight:600">${tF(t.name)} ${t.name}</td>
+          <td style="padding:4px 5px;text-align:center">${t.p||0}</td>
+          <td style="padding:4px 5px;text-align:center">${t.w||0}</td>
+          <td style="padding:4px 5px;text-align:center">${t.d||0}</td>
+          <td style="padding:4px 5px;text-align:center">${t.l||0}</td>
+          <td style="padding:4px 5px;text-align:center">${(t.gd||0)>0?'+':''}${t.gd||0}</td>
+          <td style="padding:4px 5px;text-align:center;font-weight:700">${t.pts||0}</td>
+          <td style="padding:4px 5px;text-align:center"><button class="btn bd bsm" onclick="deleteGroupTeam('${gk}','${tk}')">×</button></td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+  el.innerHTML=(existHtml||'<div class="ibox" style="margin-bottom:14px">No group standings yet.</div>')
+    +`<div class="card"><div class="slabel" style="margin-bottom:10px">Add / Update Standing</div>
+    <div class="fr" style="margin-bottom:12px">
+      <div class="fld"><label>Group</label><select id="gag">${gls.map(g=>`<option value="group${g}">Group ${g}</option>`).join('')}</select></div>
+      <div class="fld"><label>Team</label><select id="gat"><option value="">Select team…</option>${teams.map(t=>`<option value="${t}">${tF(t)} ${t}</option>`).join('')}</select></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
+      ${['P','W','D','L','GF','GA'].map(f=>`<div class="fld"><label>${f}</label><input type="number" id="gf${f.toLowerCase()}" min="0" value="0" inputmode="numeric"></div>`).join('')}
+    </div>
+    <button class="btn bg-grn" onclick="saveGRow()">Update Standing →</button></div>`;
 }
+window.deleteGroupTeam=function(grpKey,teamKey){
+  showC('Remove Team?','Remove this team from the group standings?',async()=>{
+    await dr(`comps/${adminComp}/groups/${grpKey}/teams/${teamKey}`);
+    if(COMPS[adminComp]?.groups?.[grpKey]?.teams)delete COMPS[adminComp].groups[grpKey].teams[teamKey];
+    renderGrpsAdmin();toast('Team removed','ok');
+  });
+};
+window.deleteGroup=function(grpKey){
+  showC('Delete Group?','Delete this entire group and all its standings?',async()=>{
+    await dr(`comps/${adminComp}/groups/${grpKey}`);
+    if(COMPS[adminComp]?.groups)delete COMPS[adminComp].groups[grpKey];
+    renderGrpsAdmin();toast('Group deleted','ok');
+  });
+};
 window.saveGRow=async function(){
   if(!adminComp)return;
   const grp=document.getElementById('gag').value,team=document.getElementById('gat').value;
