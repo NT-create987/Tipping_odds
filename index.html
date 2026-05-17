@@ -1263,7 +1263,7 @@ function renderTips(){
       if(dd)dd.remove();
       dd=document.createElement('div');
       dd.id='tips-done-dd';
-      dd.style.cssText='display:none;position:fixed;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:9999;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0';
+      dd.style.cssText='display:none;position:fixed;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:9999;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0;max-height:60vh;overflow-y:auto';
       dd.innerHTML=doneRnds.map(rn=>`<div style="padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:${rn===curRnd?'var(--green)':'var(--ink)'}" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background=''" onclick="window._ddPick('${rn.replace(/'/g,"\\'")}')">${rn}</div>`).join('');
       document.body.appendChild(dd);
       tabs.appendChild(wrap);
