@@ -1594,7 +1594,7 @@ function renderLB(){
     }
     return{pts,made,corr,best,pct:made>0?Math.round(corr/made*100):0};
   }
-  let topU=0;Object.values(allTips).forEach(pt=>matches.forEach(m=>{if(m.result&&pt[m.id]?.pick===m.result&&pt[m.id].pts>topU)topU=pt[m.id].pts}));
+  let topU=0;const allExtrasForTopU=getAllExtrasForPool(CP);members.forEach(un=>{const pt=allTips[un]||{};const ex=allExtrasForTopU[un]||{};matches.forEach(m=>{const t=pt[m.id];if(m.result&&t?.pick===m.result){const p=tipPoints(m,t,MY_POOL,ex);if(p>topU)topU=p;}});});
   document.getElementById('lb-up').textContent=topU>0?topU+' pts':'—';
   const rows=members.map(un=>{const u=USERS[un];return{...uStat(un),name:u?.name||un,un}}).sort((a,b)=>{
     if(lbSort==='correct')return b.corr-a.corr||b.pts-a.pts;
