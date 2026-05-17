@@ -1689,6 +1689,7 @@ function renderHist(un){
     filterEl.innerHTML='<div class="trow scroll" style="border:none;margin-bottom:8px">'
       +['All',...rounds].map(r=>`<button class="tp${(r==='All'?!histRndFilter:histRndFilter===r)?' active':''}" onclick="setHistFilter(${r==='All'?'null':"'"+r.replace(/'/g,"\\'")+"'"})"> ${r}</button>`).join('')
       +'</div>';
+    setTimeout(()=>{const a=filterEl.querySelector('.tp.active');if(a)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
   }
   // Apply filter
   const visibleRounds=histRndFilter?rounds.filter(r=>r===histRndFilter):rounds;
