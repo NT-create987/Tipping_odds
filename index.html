@@ -1594,7 +1594,7 @@ function renderLB(){
     return{pts,made,corr,best,pct:made>0?Math.round(corr/made*100):0};
   }
   let topU=0;const allExtrasForTopU=getAllExtrasForPool(CP);members.forEach(un=>{const pt=allTips[un]||{};const ex=allExtrasForTopU[un]||{};matches.forEach(m=>{const t=pt[m.id];if(m.result&&t?.pick===m.result){const p=tipPoints(m,t,MY_POOL,ex);if(p>topU)topU=p;}});});
-  document.getElementById('lb-up').textContent=topU>0?topU+' pts':'—';
+  document.getElementById('lb-up').textContent=topU>0?topU:'—';
   const rows=members.map(un=>{const u=USERS[un];return{...uStat(un),name:u?.name||un,un}}).sort((a,b)=>{
     if(lbSort==='correct')return b.corr-a.corr||b.pts-a.pts;
     if(lbSort==='upsets')return b.best-a.best||b.pts-a.pts;
@@ -2521,7 +2521,7 @@ function renderBonuses(){
   // === Order: WINNER + SCORER first (more interesting), then JOKER, then KO multiplier info ===
   if(b.winner){
     const winnerOdds=MY_COMP.winnerOdds||{};
-    const compStarted=matches.some(m=>m.datetime&&new Date(m.datetime).getTime()<Date.now());
+    const compStarted=matches.some(m=>(m.datetime&&new Date(m.datetime).getTime()<Date.now())||m.result);
     const myPick=ex.winner;
     html+=`<div class="card" style="margin-bottom:14px">
       <div class="slabel">🏆 Overall Winner</div>`;
@@ -2547,7 +2547,7 @@ function renderBonuses(){
   }
   if(b.scorer){
     const scorerOdds=MY_COMP.scorerOdds||{};
-    const compStarted=matches.some(m=>m.datetime&&new Date(m.datetime).getTime()<Date.now());
+    const compStarted=matches.some(m=>(m.datetime&&new Date(m.datetime).getTime()<Date.now())||m.result);
     const myPick=ex.scorer;
     html+=`<div class="card" style="margin-bottom:14px">
       <div class="slabel">⚽ Top Scorer</div>`;
