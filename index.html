@@ -266,7 +266,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
       <button class="nb" id="nv-grp" onclick="showPage('grp')">Groups</button>
       <button class="nb" id="nv-bkt" onclick="showPage('bkt')">Bracket</button>
       <button class="nb" id="nv-stand" onclick="showPage('stand')">Standings</button>
-      <button class="nb" id="nv-hist" onclick="showPage('hist')">History</button>
+      <button class="nb" id="nv-hist" onclick="histViewUser=null;showPage('hist')">History</button>
       <button class="nb" id="nv-bonuses" onclick="showPage('bonuses')" style="display:none">Bonuses</button>
       <button class="nb" id="nv-pools" onclick="showPage('pools')">My Pools</button>
       <button class="nb" id="nv-adm" style="display:none" onclick="showPage('adm')">⚙ Manage</button>
@@ -729,7 +729,7 @@ let curPage='land';
 let curRnd=null;
 let lbMode='all';
 let lbSort='points';
-let histRndFilter=null;
+let histRndFilter=null;let histViewUser=null;
 // Pending tip changes — keyed by matchId, value is selected pick. Saved together via Save button.
 let PENDING_TIPS={};
 let adminComp=null;      // admin's currently selected comp for editing
@@ -840,7 +840,7 @@ window.showPage=function(id){
   if(id==='lb')renderLB();
   if(id==='grp')renderGrp();
   if(id==='bkt')renderBkt();
-  if(id==='hist')renderHist(CU?.username);
+  if(id==='hist'){if(!histViewUser)histViewUser=CU?.username;renderHist(histViewUser);}
   if(id==='bonuses')renderBonuses();
   if(id==='stand')renderStandings();
   if(id==='pools')renderMyPools();
@@ -997,7 +997,7 @@ function refreshAllPages(){
   if(curPage==='lb')renderLB();
   if(curPage==='grp')renderGrp();
   if(curPage==='bkt')renderBkt();
-  if(curPage==='hist')renderHist(CU?.username);
+  if(curPage==='hist')renderHist(histViewUser||CU?.username);
   if(curPage==='pools')renderMyPools();
   if(curPage==='adm')renderAdm();
   if(curPage==='managePool')renderManagePool();
@@ -1621,7 +1621,7 @@ function clearPendingOnNav(){
   return true;
 }
 window.setLbSort=function(s){lbSort=s;renderLB()};
-window.viewH=function(un){histRndFilter=null;renderHist(un);showPage('hist')};
+window.viewH=function(un){histRndFilter=null;histViewUser=un;showPage('hist')};
 window.setHistFilter=function(rn){histRndFilter=rn;const un=document.getElementById('hist-title').dataset.un;renderHist(un)};
 
 function renderHist(un){
