@@ -705,6 +705,7 @@ let CP=null;             // current pool ID
 let curPage='land';
 let curRnd=null;
 let _savedTipsScroll=0;
+let _savedTipsScrollTs=0; // timestamp of last render — blocks scroll listener during restore
 let lbMode='all';
 let lbSort='points';
 let histRndFilter=null;let histViewUser=null;
@@ -1306,8 +1307,8 @@ function renderTips(){
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
   const savedScroll=_savedTipsScroll;
+  _savedTipsScrollTs=Date.now(); // block scroll listener while DOM is being replaced
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
-  // Only auto-scroll on first load (user at top); otherwise restore their position
   if(savedScroll>10){requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,savedScroll)));}
 }
 
@@ -1488,7 +1489,7 @@ window.setScorerPick=async function(player){
 window._ddToggle=function(e){e.stopPropagation();const d=document.getElementById('tips-done-dd');if(!d)return;if(d.style.display==='none'){const r=e.currentTarget.getBoundingClientRect();d.style.top=(r.bottom+4)+'px';d.style.left=r.left+'px';d.style.display='block';}else{d.style.display='none';}};
 window._ddPick=function(rn){curRnd=rn;_savedTipsScroll=0;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
 document.addEventListener('click',()=>{const d=document.getElementById('tips-done-dd');if(d)d.style.display='none'});
-window.addEventListener('scroll',()=>{if(curPage==='tips')_savedTipsScroll=window.scrollY;},{passive:true});
+window.addEventListener('scroll',()=>{if(curPage==='tips'&&Date.now()-_savedTipsScrollTs>200)_savedTipsScroll=window.scrollY;},{passive:true});
 window.pTip=function(mid,pick){
   if(!CU||!CP||!MY_COMP)return;
   const m=MY_COMP.matches?.[mid];
