@@ -123,7 +123,7 @@ body>*{position:relative;z-index:1}
 .mb{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:6px 10px}
 .tm{text-align:center}
 .tf{font-size:22px;margin-bottom:2px;line-height:1}
-.tn{font-weight:800;font-size:26px;color:var(--ink);line-height:1.2}
+.tn{font-weight:800;font-size:22px;color:var(--ink);line-height:1.2}
 .tsub{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
 .vc{text-align:center;padding:0 8px}
 .vt{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--muted2)}
@@ -165,18 +165,6 @@ body>*{position:relative;z-index:1}
 .bdg.bl{background:var(--blue-light);color:var(--blue)}
 .bdg.rd{background:#fceaed;color:var(--red)}
 
-.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
-.gc{background:var(--paper);border:1.5px solid var(--line);border-radius:var(--r2);overflow:hidden}
-.gh{background:var(--paper2);color:var(--ink);padding:11px 16px;font-family:'Archivo Black',sans-serif;font-size:15px;border-bottom:1px solid var(--line)}
-.gh span{color:var(--green)}
-.gt{width:100%;border-collapse:collapse;font-size:12px}
-.gt th{padding:6px 10px;text-align:center;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
-.gt th:first-child{text-align:left}
-.gt td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);font-weight:500}
-.gt td:first-child{text-align:left;font-weight:600}
-.gt tr:last-child td{border-bottom:none}
-.gt tr.q td{background:var(--green-light);color:var(--green)}
-.gn{font-size:10px;color:var(--muted2);padding:8px 12px;border-top:1px solid var(--line);background:var(--paper2)}
 
 .bwrap{overflow-x:auto;padding-bottom:14px}
 .bracket{display:flex;align-items:flex-start;min-width:840px;gap:0}
@@ -263,7 +251,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div id="nav" style="display:none">
       <button class="nb" id="nv-tips" onclick="showPage('tips')">Tips</button>
       <button class="nb" id="nv-lb" onclick="showPage('lb')">Leaderboard</button>
-      <button class="nb" id="nv-grp" onclick="showPage('grp')">Groups</button>
       <button class="nb" id="nv-bkt" onclick="showPage('bkt')">Bracket</button>
       <button class="nb" id="nv-stand" onclick="showPage('stand')">Standings</button>
       <button class="nb" id="nv-hist" onclick="histViewUser=null;showPage('hist')">History</button>
@@ -484,12 +471,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
   </div>
 </div>
 
-<!-- GROUPS -->
-<div class="page" id="page-grp">
-  <div class="ptitle">Group <span class="g">Stage</span></div>
-  <div class="psub">Top 2 from each group qualify automatically.</div>
-  <div class="ggrid" id="ggrid"></div>
-</div>
 
 <!-- BRACKET -->
 <div class="page" id="page-bkt">
@@ -617,10 +598,6 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div id="a-reslist"></div>
   </div>
 
-  <div id="at-grps" style="display:none">
-    <div class="ibox">Update group standings manually after each matchday.</div>
-    <div id="a-grpform"></div>
-  </div>
 
   <div id="at-bonus" style="display:none">
     <div class="ibox">Set tournament-winner odds for each team and the top-scorer odds for each player. These power the Bonus Picks for any pool that uses them.</div>
@@ -838,7 +815,6 @@ window.showPage=function(id){
   const nb=document.getElementById('nv-'+id);if(nb)nb.classList.add('active');
   if(id==='tips')renderTips();
   if(id==='lb')renderLB();
-  if(id==='grp')renderGrp();
   if(id==='bkt')renderBkt();
   if(id==='hist'){if(!histViewUser)histViewUser=CU?.username;renderHist(histViewUser);}
   if(id==='bonuses')renderBonuses();
@@ -980,8 +956,7 @@ function refreshContext(){
   // Show/hide Bonuses nav button
   const showBonuses=MY_POOL?.bonuses&&Object.values(MY_POOL.bonuses).some(v=>v);
   document.getElementById('nv-bonuses').style.display=showBonuses?'':'none';
-  // Hide Bracket/Groups/Standings from players entirely — admin sees via admin panel.
-  document.getElementById('nv-grp').style.display='none';
+  // Hide Bracket/Standings from players entirely — admin sees via admin panel.
   document.getElementById('nv-bkt').style.display='none';
   document.getElementById('nv-stand').style.display='none';
   renderPoolSelector();
@@ -995,7 +970,6 @@ function refreshContext(){
 function refreshAllPages(){
   if(curPage==='tips')renderTips();
   if(curPage==='lb')renderLB();
-  if(curPage==='grp')renderGrp();
   if(curPage==='bkt')renderBkt();
   if(curPage==='hist')renderHist(histViewUser||CU?.username);
   if(curPage==='pools')renderMyPools();
@@ -1245,38 +1219,51 @@ function renderTips(){
       });
       curRnd=started.length?started[started.length-1]:rnds[0];
     }
-    // Split: fully completed rounds collapse into a dropdown; active rounds stay as tabs
+    // For short round lists (tournaments ≤7 rounds) show all as tabs; otherwise collapse completed into a dropdown
     const doneRnds=rnds.filter(rn=>{
       const rms=matches.filter(m=>(m.round||'General')===rn);
       return rms.length>0&&rms.every(m=>m.result);
     });
     const activeRnds=rnds.filter(rn=>!doneRnds.includes(rn));
-    // Completed dropdown
-    if(doneRnds.length>0){
-      const curIsDone=doneRnds.includes(curRnd);
-      const label=curIsDone?curRnd:`Completed (${doneRnds.length})`;
-      const wrap=document.createElement('div');
-      wrap.style.cssText='position:relative;display:inline-block';
-      wrap.innerHTML=`<button class="tp${curIsDone?' active':''}" style="display:inline-flex;align-items:center;gap:4px" onclick="window._ddToggle(event)">${label}<span style="font-size:9px;opacity:.7">▾</span></button>`;
-      // Dropdown appended to body so it's not clipped by overflow:hidden on tab bar
-      let dd=document.getElementById('tips-done-dd');
-      if(dd)dd.remove();
-      dd=document.createElement('div');
-      dd.id='tips-done-dd';
-      dd.style.cssText='display:none;position:fixed;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:9999;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0;max-height:60vh;overflow-y:auto';
-      dd.innerHTML=doneRnds.map(rn=>`<div style="padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:${rn===curRnd?'var(--green)':'var(--ink)'}" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background=''" onclick="window._ddPick('${rn.replace(/'/g,"\\'")}')">${rn}</div>`).join('');
-      document.body.appendChild(dd);
-      tabs.appendChild(wrap);
+    if(rnds.length<8){
+      // All rounds as plain tabs — no dropdown
+      let dd=document.getElementById('tips-done-dd');if(dd)dd.remove();
+      rnds.forEach(rv=>{
+        const b=document.createElement('button');
+        b.className='tp'+(curRnd===rv?' active':'');
+        const isOpen=roundIsOpen(matches,rv);
+        b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
+        b.onclick=()=>{curRnd=rv;renderTips()};
+        tabs.appendChild(b);
+      });
+    }else{
+      // Completed dropdown
+      if(doneRnds.length>0){
+        const curIsDone=doneRnds.includes(curRnd);
+        const label=curIsDone?curRnd:`Completed (${doneRnds.length})`;
+        const wrap=document.createElement('div');
+        wrap.style.cssText='position:relative;display:inline-block';
+        wrap.innerHTML=`<button class="tp${curIsDone?' active':''}" style="display:inline-flex;align-items:center;gap:4px" onclick="window._ddToggle(event)">${label}<span style="font-size:9px;opacity:.7">▾</span></button>`;
+        // Dropdown appended to body so it's not clipped by overflow:hidden on tab bar
+        let dd=document.getElementById('tips-done-dd');
+        if(dd)dd.remove();
+        dd=document.createElement('div');
+        dd.id='tips-done-dd';
+        dd.style.cssText='display:none;position:fixed;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:9999;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0;max-height:60vh;overflow-y:auto';
+        dd.innerHTML=doneRnds.map(rn=>`<div style="padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:${rn===curRnd?'var(--green)':'var(--ink)'}" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background=''" onclick="window._ddPick('${rn.replace(/'/g,"\\'")}')">${rn}</div>`).join('');
+        document.body.appendChild(dd);
+        tabs.appendChild(wrap);
+      }
+      // Active round tabs
+      activeRnds.forEach(rv=>{
+        const b=document.createElement('button');
+        b.className='tp'+(curRnd===rv?' active':'');
+        const isOpen=roundIsOpen(matches,rv);
+        b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
+        b.onclick=()=>{curRnd=rv;renderTips()};
+        tabs.appendChild(b);
+      });
     }
-    // Active round tabs
-    activeRnds.forEach(rv=>{
-      const b=document.createElement('button');
-      b.className='tp'+(curRnd===rv?' active':'');
-      const isOpen=roundIsOpen(matches,rv);
-      b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
-      b.onclick=()=>{curRnd=rv;renderTips()};
-      tabs.appendChild(b);
-    });
     setTimeout(()=>{const a=tabs.querySelector('.tp.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
   }else curRnd=rnds[0]||null;
   let vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
@@ -1700,20 +1687,6 @@ function renderHist(un){
   el.innerHTML=html;
 }
 
-function renderGrp(){
-  const el=document.getElementById('ggrid');
-  if(!MY_COMP||!MY_COMP.groups){el.innerHTML='<div class="emp"><div class="ei">🗓</div><p>This comp doesn\'t have group standings.</p></div>';return}
-  const grps=MY_COMP.groups||{};
-  if(!Object.keys(grps).length){el.innerHTML='<div class="emp"><div class="ei">🗓</div><p>Group standings will appear once matches begin.</p></div>';return}
-  el.innerHTML=Object.entries(grps).sort((a,b)=>a[0].localeCompare(b[0])).map(([gn,gd])=>{
-    const ts=gd.teams?Object.values(gd.teams).sort((a,b)=>b.pts-a.pts||b.gd-a.gd||b.gf-a.gf):[];
-    return`<div class="gc"><div class="gh">Group <span>${gn.replace('group','')}</span></div>
-      <table class="gt"><thead><tr><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
-      <tbody>${ts.map((t,i)=>`<tr class="${i<2?'q':''}"><td><span style="font-size:14px;margin-right:5px">${tF(t.name)}</span>${t.name}</td><td>${t.p||0}</td><td>${t.w||0}</td><td>${t.d||0}</td><td>${t.l||0}</td><td>${(t.gd||0)>0?'+':''}${t.gd||0}</td><td><strong>${t.pts||0}</strong></td></tr>`).join('')}</tbody></table>
-      <div class="gn">🟢 Top 2 qualify automatically</div></div>`;
-  }).join('');
-}
-
 // Build the standings table from match results (league mode)
 function renderStandings(){
   if(!MY_COMP){document.getElementById('stand-body').innerHTML='';return}
@@ -1765,9 +1738,9 @@ function renderBkt(){
 
 // ─── ADMIN ────────────────────────
 window.aTab=function(t,btn){
-  ['comps','mod','add','imp','res','grps','bonus','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
+  ['comps','mod','add','imp','res','bonus','plyr'].forEach(x=>document.getElementById('at-'+x).style.display=x===t?'':'none');
   document.querySelectorAll('#page-adm .tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  if(t==='res')renderResTab();if(t==='grps')renderGrpsAdmin();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();if(t==='bonus')renderBonusAdmin();if(t==='imp')renderLockedRounds();if(t==='mod')renderManualOdds();
+  if(t==='res')renderResTab();if(t==='plyr')renderPlyrTab();if(t==='comps')renderCompsTab();if(t==='bonus')renderBonusAdmin();if(t==='imp')renderLockedRounds();if(t==='mod')renderManualOdds();
 };
 document.getElementById('ast').onchange=function(){document.getElementById('adf').style.display=this.value==='knockout'?'none':''};
 
@@ -2325,74 +2298,6 @@ window.delMatch=function(mid){
   showC('Delete Match?',`Remove ${m.home} vs ${m.away}? All tips for it across all pools will be deleted.`,async()=>{
     await dr(`comps/${adminComp}/matches/${mid}`);toast('Match deleted','ok');
   });
-};
-
-function renderGrpsAdmin(){
-  const el=document.getElementById('a-grpform');
-  const comp=COMPS[adminComp];
-  if(!comp){el.innerHTML='<div class="emp"><p>No active comp</p></div>';return}
-  const matches=comp.matches?Object.values(comp.matches):[];
-  const teams=[...new Set(matches.filter(m=>m.stage==='group').flatMap(m=>[m.home,m.away]))].sort();
-  const gls=['A','B','C','D','E','F','G','H','I','J','K','L'];
-  // Show existing groups with delete buttons
-  const grps=comp.groups||{};
-  let existHtml='';
-  const sortedGrps=Object.entries(grps).sort((a,b)=>a[0].localeCompare(b[0]));
-  for(const[gk,gd]of sortedGrps){
-    const gName='Group '+gk.replace('group','');
-    const teamRows=gd.teams?Object.entries(gd.teams).sort((a,b)=>b[1].pts-a[1].pts||b[1].gd-a[1].gd):[];
-    existHtml+=`<div class="card" style="margin-bottom:12px;padding:10px 12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:13px">
-        <span>${gName}</span>
-        <button class="btn bd bsm" onclick="deleteGroup('${gk}')">🗑 Delete Group</button>
-      </div>
-      <table style="width:100%;font-size:12px;border-collapse:collapse">
-        <thead><tr style="color:var(--muted);font-size:11px">${['Team','P','W','D','L','GD','Pts',''].map(h=>`<th style="padding:3px 5px;text-align:${h?'left':'center'}">${h}</th>`).join('')}</tr></thead>
-        <tbody>${teamRows.map(([tk,t])=>`<tr style="border-top:1px solid var(--line)">
-          <td style="padding:4px 5px;font-weight:600">${tF(t.name)} ${t.name}</td>
-          <td style="padding:4px 5px;text-align:center">${t.p||0}</td>
-          <td style="padding:4px 5px;text-align:center">${t.w||0}</td>
-          <td style="padding:4px 5px;text-align:center">${t.d||0}</td>
-          <td style="padding:4px 5px;text-align:center">${t.l||0}</td>
-          <td style="padding:4px 5px;text-align:center">${(t.gd||0)>0?'+':''}${t.gd||0}</td>
-          <td style="padding:4px 5px;text-align:center;font-weight:700">${t.pts||0}</td>
-          <td style="padding:4px 5px;text-align:center"><button class="btn bd bsm" onclick="deleteGroupTeam('${gk}','${tk}')">×</button></td>
-        </tr>`).join('')}</tbody>
-      </table>
-    </div>`;
-  }
-  el.innerHTML=(existHtml||'<div class="ibox" style="margin-bottom:14px">No group standings yet.</div>')
-    +`<div class="card"><div class="slabel" style="margin-bottom:10px">Add / Update Standing</div>
-    <div class="fr" style="margin-bottom:12px">
-      <div class="fld"><label>Group</label><select id="gag">${gls.map(g=>`<option value="group${g}">Group ${g}</option>`).join('')}</select></div>
-      <div class="fld"><label>Team</label><select id="gat"><option value="">Select team…</option>${teams.map(t=>`<option value="${t}">${tF(t)} ${t}</option>`).join('')}</select></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px">
-      ${['P','W','D','L','GF','GA'].map(f=>`<div class="fld"><label>${f}</label><input type="number" id="gf${f.toLowerCase()}" min="0" value="0" inputmode="numeric"></div>`).join('')}
-    </div>
-    <button class="btn bg-grn" onclick="saveGRow()">Update Standing →</button></div>`;
-}
-window.deleteGroupTeam=function(grpKey,teamKey){
-  showC('Remove Team?','Remove this team from the group standings?',async()=>{
-    await dr(`comps/${adminComp}/groups/${grpKey}/teams/${teamKey}`);
-    if(COMPS[adminComp]?.groups?.[grpKey]?.teams)delete COMPS[adminComp].groups[grpKey].teams[teamKey];
-    renderGrpsAdmin();toast('Team removed','ok');
-  });
-};
-window.deleteGroup=function(grpKey){
-  showC('Delete Group?','Delete this entire group and all its standings?',async()=>{
-    await dr(`comps/${adminComp}/groups/${grpKey}`);
-    if(COMPS[adminComp]?.groups)delete COMPS[adminComp].groups[grpKey];
-    renderGrpsAdmin();toast('Group deleted','ok');
-  });
-};
-window.saveGRow=async function(){
-  if(!adminComp)return;
-  const grp=document.getElementById('gag').value,team=document.getElementById('gat').value;
-  if(!team){toast('Select a team','err');return}
-  const p=+document.getElementById('gfp').value,w=+document.getElementById('gfw').value,d=+document.getElementById('gfd').value,l=+document.getElementById('gfl').value,gf=+document.getElementById('gfgf').value,ga=+document.getElementById('gfga').value;
-  await ds(`comps/${adminComp}/groups/${grp}/teams/${team.replace(/[^a-z0-9]/gi,'_')}`,{name:team,p,w,d,l,gf,ga,gd:gf-ga,pts:w*3+d});
-  toast(team+' updated','ok');
 };
 
 function renderPlyrTab(){
