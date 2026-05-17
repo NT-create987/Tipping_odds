@@ -1003,7 +1003,6 @@ function refreshAllPages(){
     _tipScrollTarget=window.scrollY;
     setTimeout(()=>{_tipScrollTarget=null;},600);
   }
-  console.log('[RAP] curPage='+curPage+' scrollY='+window.scrollY+' tipScrollTarget='+_tipScrollTarget);
   if(curPage==='tips')renderTips();
   if(curPage==='lb')renderLB();
   if(curPage==='bkt')renderBkt();
@@ -1317,7 +1316,7 @@ function renderTips(){
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
-  if(_tipScrollTarget>10){const t=_tipScrollTarget;console.log('[RT] scheduling restore to '+t);requestAnimationFrame(()=>requestAnimationFrame(()=>{console.log('[RT] restoring scrollTo '+t+' current='+window.scrollY);window.scrollTo(0,t);}));}else{console.log('[RT] NO restore, tipScrollTarget='+_tipScrollTarget+' scrollY='+window.scrollY);}
+  if(_tipScrollTarget>10){const t=_tipScrollTarget;requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,t);}));}
   updateSaveBar();
 }
 
@@ -1463,9 +1462,7 @@ window.playJoker=async function(mid,roundKey){
   if(ct==='tournament'&&m.stage!=='group'){toast('Joker only works on group stage matches','err');return}
   const ex=getMyExtras();
   if(ex.jokerByRound?.[roundKey]){toast('Joker already played for this round','err');return}
-  console.log('[JOKER] play scrollY='+window.scrollY+' tipScrollTarget='+_tipScrollTarget);
   await ds(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`,mid);
-  console.log('[JOKER] play AFTER await scrollY='+window.scrollY+' tipScrollTarget='+_tipScrollTarget);
   toast('🎴 Joker played!','ok');
 };
 window.removeJoker=async function(roundKey){
@@ -1475,9 +1472,7 @@ window.removeJoker=async function(roundKey){
   if(!mid)return;
   const m=MY_COMP?.matches?.[mid];
   if(m&&isLk(m)){toast('Joker match already locked — can\'t remove','err');return}
-  console.log('[JOKER] remove scrollY='+window.scrollY+' tipScrollTarget='+_tipScrollTarget);
   await dr(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`);
-  console.log('[JOKER] remove AFTER await scrollY='+window.scrollY+' tipScrollTarget='+_tipScrollTarget);
   toast('Joker removed','ok');
 };
 window.setWinnerPick=async function(team){
