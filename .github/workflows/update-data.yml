@@ -15,18 +15,21 @@ jobs:
           FIREBASE_DATABASE_URL: 'https://tip-odds-default-rtdb.asia-southeast1.firebasedatabase.app'
           ODDS_API_KEY: '90bd97b1a3d1f2a20fcfbab7362dd25b'
           FD_API_KEY: '832afb54b4444efd9ff13c6946929b4e'
+          FIREBASE_DB_SECRET: ${{ secrets.FIREBASE_DB_SECRET }}
         run: |
           node -e "
           const FB = process.env.FIREBASE_DATABASE_URL;
           const ODDS_KEY = process.env.ODDS_API_KEY;
           const FD_KEY = process.env.FD_API_KEY;
+          const DB_SECRET = process.env.FIREBASE_DB_SECRET;
+          const auth = DB_SECRET ? '?auth=' + DB_SECRET : '';
 
           async function fbGet(path) {
-            const r = await fetch(FB + '/' + path + '.json');
+            const r = await fetch(FB + '/' + path + '.json' + auth);
             return r.ok ? r.json() : null;
           }
           async function fbPatch(path, data) {
-            const r = await fetch(FB + '/' + path + '.json', {
+            const r = await fetch(FB + '/' + path + '.json' + auth, {
               method: 'PATCH',
               headers: {'Content-Type': 'application/json'},
               body: JSON.stringify(data)
