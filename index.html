@@ -704,6 +704,7 @@ let CU=null;             // current user {username,name,email,isAdmin}
 let CP=null;             // current pool ID
 let curPage='land';
 let curRnd=null;
+let _savedTipsScroll=0;
 let lbMode='all';
 let lbSort='points';
 let histRndFilter=null;let histViewUser=null;
@@ -817,15 +818,30 @@ function hideOv(){document.getElementById('ov').classList.remove('show')}
 
 // ─── NAVIGATION ────────────────────────
 window.showPage=function(id){
+  _savedTipsScroll=0;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById('page-'+id);if(el)el.classList.add('active');
   curPage=id;
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   const nb=document.getElementById('nv-'+id);if(nb)nb.classList.add('active');
-  if(id==='tips')renderTips();
+  if(id==='tips'){curRnd=null;renderTips();}
   if(id==='lb')renderLB();
   if(id==='bkt')renderBkt();
-  if(id==='hist'){if(!histViewUser)histViewUser=CU?.username;renderHist(histViewUser);}
+  if(id==='hist'){
+    if(!histViewUser)histViewUser=CU?.username;
+    // Default to current round each time History is opened
+    if(MY_COMP?.matches){
+      const _ms=Object.values(MY_COMP.matches);
+      const _ct=compTypeOf(MY_COMP);
+      const _rnds=[...new Set(_ms.map(m=>m.round||'General'))].sort((a,b)=>roundCompare(a,b,_ct));
+      if(_rnds.length){
+        const _now=Date.now();
+        const _started=_rnds.filter(rn=>{const rms=_ms.filter(m=>(m.round||'General')===rn);const e=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;return e&&e<=_now;});
+        histRndFilter=_started.length?_started[_started.length-1]:_rnds[0];
+      }
+    }
+    renderHist(histViewUser);
+  }
   if(id==='bonuses')renderBonuses();
   if(id==='stand')renderStandings();
   if(id==='pools')renderMyPools();
@@ -1243,7 +1259,7 @@ function renderTips(){
         b.className='tp'+(curRnd===rv?' active':'');
         const isOpen=roundIsOpen(matches,rv);
         b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
-        b.onclick=()=>{curRnd=rv;renderTips()};
+        b.onclick=()=>{curRnd=rv;_savedTipsScroll=0;renderTips()};
         tabs.appendChild(b);
       });
     }else{
@@ -1270,7 +1286,7 @@ function renderTips(){
         b.className='tp'+(curRnd===rv?' active':'');
         const isOpen=roundIsOpen(matches,rv);
         b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
-        b.onclick=()=>{curRnd=rv;renderTips()};
+        b.onclick=()=>{curRnd=rv;_savedTipsScroll=0;renderTips()};
         tabs.appendChild(b);
       });
     }
@@ -1289,11 +1305,10 @@ function renderTips(){
   }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  const savedScroll=window.scrollY;
+  const savedScroll=_savedTipsScroll;
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   // Only auto-scroll on first load (user at top); otherwise restore their position
   if(savedScroll>10){requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,savedScroll)));}
-  else{setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},80);}
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
@@ -1471,8 +1486,9 @@ window.setScorerPick=async function(player){
 
 
 window._ddToggle=function(e){e.stopPropagation();const d=document.getElementById('tips-done-dd');if(!d)return;if(d.style.display==='none'){const r=e.currentTarget.getBoundingClientRect();d.style.top=(r.bottom+4)+'px';d.style.left=r.left+'px';d.style.display='block';}else{d.style.display='none';}};
-window._ddPick=function(rn){curRnd=rn;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
+window._ddPick=function(rn){curRnd=rn;_savedTipsScroll=0;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
 document.addEventListener('click',()=>{const d=document.getElementById('tips-done-dd');if(d)d.style.display='none'});
+window.addEventListener('scroll',()=>{if(curPage==='tips')_savedTipsScroll=window.scrollY;},{passive:true});
 window.pTip=function(mid,pick){
   if(!CU||!CP||!MY_COMP)return;
   const m=MY_COMP.matches?.[mid];
@@ -1701,10 +1717,6 @@ function renderHist(un){
     }).join('');
   }
   el.innerHTML=html;
-  // Auto-scroll to latest round on first open (not when using filter)
-  if(!histRndFilter){
-    setTimeout(()=>{const hdrs=el.querySelectorAll('.hist-rn-hdr');if(hdrs.length>1){hdrs[hdrs.length-1].scrollIntoView({behavior:'smooth',block:'start'})}},120);
-  }
 }
 
 // Build the standings table from match results (league mode)
