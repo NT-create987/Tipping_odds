@@ -1553,6 +1553,7 @@ async function savePendingTips(){
       }
     }
     PENDING_TIPS={};
+    if(btn){btn.disabled=false;btn.textContent='💾 Save Tips'}
     updateSaveBar();
     toast('✓ '+tipsToSave.length+' tip'+(tipsToSave.length!==1?'s':'')+' saved','ok');
   }catch(e){
