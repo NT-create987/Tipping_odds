@@ -704,8 +704,7 @@ let CU=null;             // current user {username,name,email,isAdmin}
 let CP=null;             // current pool ID
 let curPage='land';
 let curRnd=null;
-let _savedTipsScroll=0;
-let _savedTipsScrollTs=0; // timestamp of last render — blocks scroll listener during restore
+let _tipScrollTarget=null; // scroll position to restore after a background re-render
 let lbMode='all';
 let lbSort='points';
 let histRndFilter=null;let histViewUser=null;
@@ -819,7 +818,7 @@ function hideOv(){document.getElementById('ov').classList.remove('show')}
 
 // ─── NAVIGATION ────────────────────────
 window.showPage=function(id){
-  _savedTipsScroll=0;
+  _tipScrollTarget=null;
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById('page-'+id);if(el)el.classList.add('active');
   curPage=id;
@@ -996,6 +995,11 @@ function refreshContext(){
 }
 
 function refreshAllPages(){
+  // Capture scroll position once before any DOM changes so rapid re-renders all restore to the same value
+  if(curPage==='tips'&&window.scrollY>10&&!_tipScrollTarget){
+    _tipScrollTarget=window.scrollY;
+    setTimeout(()=>{_tipScrollTarget=null;},600);
+  }
   if(curPage==='tips')renderTips();
   if(curPage==='lb')renderLB();
   if(curPage==='bkt')renderBkt();
@@ -1262,7 +1266,7 @@ function renderTips(){
         b.className='tp'+(curRnd===rv?' active':'');
         const isOpen=roundIsOpen(matches,rv);
         b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
-        b.onclick=()=>{curRnd=rv;_savedTipsScroll=0;renderTips()};
+        b.onclick=()=>{curRnd=rv;renderTips()};
         tabs.appendChild(b);
       });
     }else{
@@ -1289,7 +1293,7 @@ function renderTips(){
         b.className='tp'+(curRnd===rv?' active':'');
         const isOpen=roundIsOpen(matches,rv);
         b.innerHTML=rv+(!isOpen?' <span style="font-size:9px;color:var(--gold);font-weight:700">⏳</span>':'');
-        b.onclick=()=>{curRnd=rv;_savedTipsScroll=0;renderTips()};
+        b.onclick=()=>{curRnd=rv;renderTips()};
         tabs.appendChild(b);
       });
     }
@@ -1308,10 +1312,8 @@ function renderTips(){
   }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  const savedScroll=_savedTipsScroll;
-  _savedTipsScrollTs=Date.now(); // block scroll listener while DOM is being replaced
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
-  if(savedScroll>10){requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,savedScroll)));}
+  if(_tipScrollTarget>10){const t=_tipScrollTarget;requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,t)));}
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
@@ -1489,9 +1491,8 @@ window.setScorerPick=async function(player){
 
 
 window._ddToggle=function(e){e.stopPropagation();const d=document.getElementById('tips-done-dd');if(!d)return;if(d.style.display==='none'){const r=e.currentTarget.getBoundingClientRect();d.style.top=(r.bottom+4)+'px';d.style.left=r.left+'px';d.style.display='block';}else{d.style.display='none';}};
-window._ddPick=function(rn){curRnd=rn;_savedTipsScroll=0;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
+window._ddPick=function(rn){curRnd=rn;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
 document.addEventListener('click',()=>{const d=document.getElementById('tips-done-dd');if(d)d.style.display='none'});
-window.addEventListener('scroll',()=>{if(curPage==='tips'&&Date.now()-_savedTipsScrollTs>200)_savedTipsScroll=window.scrollY;},{passive:true});
 window.pTip=function(mid,pick){
   if(!CU||!CP||!MY_COMP)return;
   const m=MY_COMP.matches?.[mid];
