@@ -1663,10 +1663,8 @@ function renderHist(un){
   const groups={};
   involved.forEach(m=>{const r=m.round||'General';(groups[r]=groups[r]||[]).push(m)});
   // Sort matches within each round chronologically (newest first to surface latest)
-  Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(b.datetime||0)-new Date(a.datetime||0)));
+  Object.keys(groups).forEach(r=>groups[r].sort((a,b)=>new Date(a.datetime||0)-new Date(b.datetime||0)));
   const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
-  // For history, show latest rounds first (reverse order)
-  rounds.reverse();
   // Round filter chips
   const filterEl=document.getElementById('hist-filter');
   if(filterEl){
