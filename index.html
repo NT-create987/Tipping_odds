@@ -870,6 +870,7 @@ function getMyPools(){
   return Object.values(POOLS).filter(p=>p.members&&p.members[CU.username]);
 }
 
+function saveLastPool(pid){if(CU?.username&&pid){if(CU)CU.lastPool=pid;du('users/'+CU.username,{lastPool:pid});}}
 function setUser(u){
   CU=u;
   document.getElementById('nav').style.display='flex';
@@ -973,9 +974,10 @@ function startListeners(){
 function refreshContext(){
   if(!CU)return;
   const myPools=getMyPools();
-  // Set default pool if needed
+  // Set default pool if needed — prefer last selected, fall back to first
   if(!CP||!POOLS[CP]||!POOLS[CP].members?.[CU.username]){
-    CP=myPools.length?myPools[0].id:null;
+    const lp=CU.lastPool;
+    CP=(lp&&POOLS[lp]&&POOLS[lp].members?.[CU.username])?lp:(myPools.length?myPools[0].id:null);
   }
   MY_POOL=CP?POOLS[CP]:null;
   MY_COMP=MY_POOL?COMPS[MY_POOL.compId]:null;
@@ -1019,7 +1021,7 @@ function renderPoolSelector(){
   }
 }
 
-window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
+window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
 
 // ─── POOLS ────────────────────────
 function renderMyPools(){
@@ -1055,7 +1057,7 @@ function renderMyPools(){
     </div>`;
   }).join('');
 }
-window.selectPoolFromList=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];renderPoolSelector();showPage('tips')};
+window.selectPoolFromList=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);renderPoolSelector();showPage('tips')};
 window.openManagePool=function(pid){CP=pid;showPage('managePool')};
 window.leavePool=function(pid){
   const p=POOLS[pid];if(!p)return;
@@ -1079,10 +1081,10 @@ window.doJoinPool=async function(){
   showOv();
   const pool=Object.values(POOLS).find(p=>p.code===code);
   if(!pool){hideOv();toast('Pool code not found','err');return}
-  if(pool.members?.[CU.username]){hideOv();toast('You\'re already in this pool','info');CP=pool.id;showPage('tips');return}
+  if(pool.members?.[CU.username]){hideOv();toast('You\'re already in this pool','info');CP=pool.id;saveLastPool(pool.id);showPage('tips');return}
   await ds(`pools/${pool.id}/members/${CU.username}`,{joined:Date.now()});
   hideOv();toast('Joined '+pool.name+'!','ok');
-  CP=pool.id;
+  CP=pool.id;saveLastPool(pool.id);
   setTimeout(()=>showPage('tips'),300);
 };
 
@@ -1132,7 +1134,7 @@ window.doCreatePool=async function(){
     created:Date.now()
   });
   hideOv();
-  CP=pid;
+  CP=pid;saveLastPool(pid);
   document.getElementById('newPoolCode').textContent=code;
   showPage('poolCreated');
 };
@@ -2657,7 +2659,7 @@ onAuthStateChanged(auth,async fbUser=>{
       }
     }
     if(ud){const u=await dg('users/'+ud.username);if(u){
-      setUser({name:u.name,username:ud.username,email:u.email,isAdmin:u.isAdmin});
+      setUser({name:u.name,username:ud.username,email:u.email,isAdmin:u.isAdmin,lastPool:u.lastPool||null});
       setTimeout(()=>{const myPools=getMyPools();showPage(myPools.length?'tips':'welcome');document.getElementById('welcomeName').textContent=u.name.split(' ')[0]||u.name},400);
     }}
   }else if(!fbUser&&!['land','reg','login','forgot'].includes(curPage)){showPage('land')}
