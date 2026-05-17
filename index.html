@@ -2675,6 +2675,8 @@ document.addEventListener('keydown',e=>{
     if(curPage==='createPool')doCreatePool();
   }
 });
+// TEMP DEBUG — remove after testing
+window.__debug={get tst(){return _tipScrollTarget;},refresh:refreshAllPages,showTips:()=>showPage('tips')};
 </script>
 </body>
 </html>
