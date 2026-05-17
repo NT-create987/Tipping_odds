@@ -1292,7 +1292,7 @@ function renderTips(){
   const savedScroll=window.scrollY;
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   // Only auto-scroll on first load (user at top); otherwise restore their position
-  if(savedScroll>10){window.scrollTo(0,savedScroll);}
+  if(savedScroll>10){requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo(0,savedScroll)));}
   else{setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},80);}
 }
 
