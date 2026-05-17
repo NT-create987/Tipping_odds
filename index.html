@@ -150,8 +150,8 @@ body>*{position:relative;z-index:1}
 .tcre{padding:5px 10px;font-size:10px;color:var(--muted);border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-weight:500}
 
 .lbt{width:100%;border-collapse:collapse}
-.lbt th{text-align:left;padding:6px 10px;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
-.lbt td{padding:7px 10px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}
+.lbt th{text-align:left;padding:6px 8px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line);white-space:nowrap}
+.lbt td{padding:7px 8px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:middle}
 .lbt tr:last-child td{border-bottom:none}
 .lbt tr:hover td{background:var(--paper2);cursor:pointer}
 .lbt tr.me td{background:var(--green-light)}
@@ -466,7 +466,7 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     </div>
   </div>
   <div class="card" style="overflow-x:auto;padding:0">
-    <table class="lbt"><thead><tr><th>#</th><th>Player</th><th>Tips</th><th>Correct %</th><th>Best Upset</th><th>Points</th></tr></thead>
+    <table class="lbt"><thead><tr><th>#</th><th>Player</th><th style="text-align:center">Tips</th><th style="text-align:center">%</th><th style="text-align:center">Best</th><th style="text-align:right">Points</th></tr></thead>
     <tbody id="lb-body"></tbody></table>
   </div>
 </div>
@@ -730,6 +730,15 @@ function getMatchOdds(match,pool){
     oD:useNoisy&&match.noisyD?+match.noisyD:+match.oddsD,
     oA:useNoisy?+match.noisyA:+match.oddsA
   };
+}
+// Joker eligibility: large tournaments (has R32) = joker for R32+R16 only;
+// small tournaments (Euros etc) = joker for all except QF/SF/Final/3PP
+function jokerAllowed(m,comp){
+  const allMatches=comp?.matches?Object.values(comp.matches):[];
+  const hasR32=allMatches.some(mx=>{const r=(mx.round||'').toLowerCase();return r.includes('32')||r.includes('round of 32');});
+  const rnd=(m.round||'').toLowerCase();
+  if(hasR32){return rnd.includes('32')||rnd.includes('16');}
+  else{return!rnd.includes('quarter')&&!rnd.includes('semi')&&!rnd.includes('final')&&!rnd.includes('third')&&!rnd.includes('playoff');}
 }
 function calcMatchPts(match,pick,pool){
   if(!match||!match.oddsH||match.oddsH<1.01)return 0;
@@ -1198,9 +1207,10 @@ function renderTips(){
   matches.forEach(m=>{const t=tips[m.id];if(t){made++;if(m.result&&t.pick===m.result){const p=tipPoints(m,t,MY_POOL,myEx);pts+=p;corr++;if(p>best)best=p}}});
   if(MY_POOL?.bonuses?.winner&&myEx.winner&&MY_COMP?.tournamentWinner===myEx.winner&&myEx.winnerOdds)pts+=bonusPickPts(myEx.winnerOdds);
   if(MY_POOL?.bonuses?.scorer&&myEx.scorer&&MY_COMP?.topScorer===myEx.scorer&&myEx.scorerOdds)pts+=bonusPickPts(myEx.scorerOdds);
+  const totalDone=matches.filter(m=>m.result).length;
   document.getElementById('s-pts').textContent=pts;
   document.getElementById('s-nt').textContent=made;
-  document.getElementById('s-co').textContent=corr;
+  document.getElementById('s-co').innerHTML=corr+'<span style="font-size:13px;color:var(--muted);font-family:\'Archivo\',sans-serif;font-weight:500"> of '+totalDone+'</span>';
   document.getElementById('s-bw').textContent=best>0?best:'—';
   matches.sort((a,b)=>new Date(a.datetime)-new Date(b.datetime));
   const _ct=compTypeOf(MY_COMP);
@@ -1275,11 +1285,13 @@ function renderTips(){
   let pendingNotice='';
   if(curRnd&&!_curRoundOpen){
     const missing=vis.filter(m=>!m.result&&(!m.oddsH||m.oddsH<1.01)).length;
-    pendingNotice=`<div class="wbox">⏳ <strong>This round is not open for tipping yet.</strong> ${missing} match${missing!==1?'es':''} still need odds. Tipping will unlock once all odds are set.</div>`;
+    pendingNotice=`<div class="wbox">⏳ Tipping not open yet.</div>`;
   }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
+  // Scroll so match list is visible on page load
+  setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},80);
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
@@ -1315,7 +1327,7 @@ function mCard(m,myTip,roundOpen=true){
   const hasOdds=m.oddsH&&m.oddsH>=1.01;
   // Joker info — per round, any round for leagues; group stage only for tournaments
   const _ct=compTypeOf(MY_COMP);
-  const jokerOn=MY_POOL?.bonuses?.joker&&((_ct==='league')||(_ct==='tournament'&&m.stage==='group'));
+  const jokerOn=MY_POOL?.bonuses?.joker&&((_ct==='league')||(_ct==='tournament'&&jokerAllowed(m,MY_COMP)));
   const myExtras=getMyExtras();
   const myJokers=myExtras.jokerByRound||{};
   const roundKey=safeRoundKey(m.round);
@@ -1593,9 +1605,9 @@ function renderLB(){
     <tr class="${p.un===CU?.username?'me':''}" onclick="viewH('${p.un}')">
       <td><span class="rk ${rc[i]||''}">${i+1}</span></td>
       <td><div style="font-weight:600">${p.name}${p.un===CU?.username?' <span style="color:var(--green);font-size:10px;font-weight:700">(YOU)</span>':''}</div><div style="font-size:11px;color:var(--muted)">${p.corr} correct of ${p.made} tips</div></td>
-      <td>${p.made}</td><td>${p.pct}%</td>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);font-weight:500">${p.best>0?p.best+' pts':'—'}</td>
-      <td><span class="pbig">${p.pts}</span></td>
+      <td style="text-align:center">${p.made}</td><td style="text-align:center">${p.pct}%</td>
+      <td style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);font-weight:500">${p.best>0?p.best:'—'}</td>
+      <td style="text-align:right"><span class="pbig">${p.pts}</span></td>
     </tr>`).join('')||'<tr><td colspan="6"><div class="emp"><div class="ei">🏆</div><p>No players yet</p></div></td></tr>';
 }
 window.lbT=function(m,btn){lbMode=m;document.querySelectorAll('#page-lb .tp').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderLB()};
@@ -1656,7 +1668,7 @@ function renderHist(un){
   const filterEl=document.getElementById('hist-filter');
   if(filterEl){
     filterEl.innerHTML='<div class="trow scroll" style="border:none;margin-bottom:8px">'
-      +['All',...rounds].map(r=>`<button class="tp${(r==='All'?!histRndFilter:histRndFilter===r)?' active':''}" onclick="setHistFilter(${r==='All'?'null':"'"+r.replace(/'/g,"\\'")+"'"})">  ${r}</button>`).join('')
+      +['All',...rounds].map(r=>`<button class="tp${(r==='All'?!histRndFilter:histRndFilter===r)?' active':''}" onclick="setHistFilter(${r==='All'?'null':"'"+r.replace(/'/g,"\\'")+"'"})"> ${r}</button>`).join('')
       +'</div>';
   }
   // Apply filter
@@ -1664,14 +1676,15 @@ function renderHist(un){
   let html='';
   for(const rn of visibleRounds){
     const rms=groups[rn];
-    const tipped=rms.filter(m=>mt[m.id]).length;
     const correct=rms.filter(m=>mt[m.id]&&mt[m.id].pick===m.result).length;
     const totalDone=rms.filter(m=>m.result&&mt[m.id]).length;
     const pendingCount=rms.filter(m=>!m.result&&mt[m.id]).length;
+    const rnPts=rms.reduce((sum,m)=>{const t=mt[m.id];if(t&&m.result&&t.pick===m.result)sum+=tipPoints(m,t,MY_POOL,ex);return sum;},0);
     let summary='';
     if(totalDone)summary+=`<span style="color:var(--green);font-weight:600">${correct}/${totalDone}</span>`;
+    if(rnPts>0)summary+=(summary?' · ':'')+`<span style="color:var(--green);font-weight:700">${rnPts} pts</span>`;
     if(pendingCount)summary+=(summary?' · ':'')+`<span style="color:var(--blue)">${pendingCount} pending</span>`;
-    html+=`<div style="margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px"><span>${rn}</span><span style="font-size:11px;font-weight:500">${summary}</span></div>`;
+    html+=`<div class="hist-rn-hdr" style="margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px"><span>${rn}</span><span style="font-size:11px;font-weight:500">${summary}</span></div>`;
     html+=rms.map(m=>{
       const t=mt[m.id];
       let cls='pend',lbl='—',bdg='';
@@ -1685,6 +1698,10 @@ function renderHist(un){
     }).join('');
   }
   el.innerHTML=html;
+  // Auto-scroll to latest round on first open (not when using filter)
+  if(!histRndFilter){
+    setTimeout(()=>{const hdrs=el.querySelectorAll('.hist-rn-hdr');if(hdrs.length>1){hdrs[hdrs.length-1].scrollIntoView({behavior:'smooth',block:'start'})}},120);
+  }
 }
 
 // Build the standings table from match results (league mode)
@@ -1772,7 +1789,7 @@ async function autoLockNearRounds(){
   const locked=comp.lockedRounds||{};
   const manuallyUnlocked=comp.manuallyUnlockedRounds||{};
   const now=Date.now();
-  const SEVEN_DAYS=7*24*60*60*1000;
+  const SEVEN_DAYS=3*24*60*60*1000;
   // Group matches by round, find earliest kickoff per round
   const earliestByRound={};
   Object.values(comp.matches).forEach(m=>{
@@ -1791,7 +1808,7 @@ async function autoLockNearRounds(){
       lockedCount++;
     }
   }
-  if(lockedCount>0)toast('🔒 Auto-locked '+lockedCount+' round'+(lockedCount>1?'s':'')+' (kick-off within 7 days)','info');
+  if(lockedCount>0)toast('🔒 Auto-locked '+lockedCount+' round'+(lockedCount>1?'s':'')+' (kick-off within 3 days)','info');
 }
 
 // Natural-sort comparator for round names like "Matchday 1" vs "Matchday 10"
@@ -2128,7 +2145,7 @@ function renderManualOdds(){
   const ct=compTypeOf(comp);
   const rounds=Object.keys(groups).sort((a,b)=>roundCompare(a,b,ct));
   const now=Date.now();
-  const SEVEN=7*24*60*60*1000;
+  const SEVEN=3*24*60*60*1000;
   // Build round status map
   const roundStatus={};
   for(const rn of rounds){
