@@ -819,6 +819,9 @@ function hideOv(){document.getElementById('ov').classList.remove('show')}
 // ─── NAVIGATION ────────────────────────
 window.showPage=function(id){
   _tipScrollTarget=null;
+  // Hide save bar when leaving Tips — show it again if pending tips exist when returning
+  const _bar=document.getElementById('saveBar');
+  if(_bar)_bar.style.display='none';
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const el=document.getElementById('page-'+id);if(el)el.classList.add('active');
   curPage=id;
@@ -1315,6 +1318,7 @@ function renderTips(){
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   if(_tipScrollTarget>10){const t=_tipScrollTarget;console.log('[RT] scheduling restore to '+t);requestAnimationFrame(()=>requestAnimationFrame(()=>{console.log('[RT] restoring scrollTo '+t+' current='+window.scrollY);window.scrollTo(0,t);}));}else{console.log('[RT] NO restore, tipScrollTarget='+_tipScrollTarget+' scrollY='+window.scrollY);}
+  updateSaveBar();
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
