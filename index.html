@@ -1289,9 +1289,11 @@ function renderTips(){
   }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
+  const savedScroll=window.scrollY;
   el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
-  // Scroll so match list is visible on page load
-  setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},80);
+  // Only auto-scroll on first load (user at top); otherwise restore their position
+  if(savedScroll>10){window.scrollTo(0,savedScroll);}
+  else{setTimeout(()=>{el.scrollIntoView({behavior:'smooth',block:'start'})},80);}
 }
 
 function getMyTips(){return getTipsForPool(CP,CU?.username)||{}}
