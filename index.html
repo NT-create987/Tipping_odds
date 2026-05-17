@@ -1257,7 +1257,15 @@ function renderTips(){
       const label=curIsDone?curRnd:`Completed (${doneRnds.length})`;
       const wrap=document.createElement('div');
       wrap.style.cssText='position:relative;display:inline-block';
-      wrap.innerHTML=`<button class="tp${curIsDone?' active':''}" style="display:inline-flex;align-items:center;gap:4px" onclick="window._ddToggle(event)">${label}<span style="font-size:9px;opacity:.7">▾</span></button><div id="tips-done-dd" style="display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:200;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0">${doneRnds.map(rn=>`<div style="padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:${rn===curRnd?'var(--green)':'var(--ink)'}" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background=''" onclick="window._ddPick('${rn.replace(/'/g,"\\'")}')">${rn}</div>`).join('')}</div>`;
+      wrap.innerHTML=`<button class="tp${curIsDone?' active':''}" style="display:inline-flex;align-items:center;gap:4px" onclick="window._ddToggle(event)">${label}<span style="font-size:9px;opacity:.7">▾</span></button>`;
+      // Dropdown appended to body so it's not clipped by overflow:hidden on tab bar
+      let dd=document.getElementById('tips-done-dd');
+      if(dd)dd.remove();
+      dd=document.createElement('div');
+      dd.id='tips-done-dd';
+      dd.style.cssText='display:none;position:fixed;background:var(--paper2);border:1px solid var(--line2);border-radius:10px;z-index:9999;min-width:175px;box-shadow:0 8px 28px rgba(0,0,0,0.22);padding:5px 0';
+      dd.innerHTML=doneRnds.map(rn=>`<div style="padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;color:${rn===curRnd?'var(--green)':'var(--ink)'}" onmouseenter="this.style.background='var(--line)'" onmouseleave="this.style.background=''" onclick="window._ddPick('${rn.replace(/'/g,"\\'")}')">${rn}</div>`).join('');
+      document.body.appendChild(dd);
       tabs.appendChild(wrap);
     }
     // Active round tabs
@@ -1461,7 +1469,7 @@ window.setScorerPick=async function(player){
 };
 
 
-window._ddToggle=function(e){e.stopPropagation();const d=document.getElementById('tips-done-dd');if(d)d.style.display=d.style.display==='none'?'block':'none'};
+window._ddToggle=function(e){e.stopPropagation();const d=document.getElementById('tips-done-dd');if(!d)return;if(d.style.display==='none'){const r=e.currentTarget.getBoundingClientRect();d.style.top=(r.bottom+4)+'px';d.style.left=r.left+'px';d.style.display='block';}else{d.style.display='none';}};
 window._ddPick=function(rn){curRnd=rn;const d=document.getElementById('tips-done-dd');if(d)d.style.display='none';renderTips()};
 document.addEventListener('click',()=>{const d=document.getElementById('tips-done-dd');if(d)d.style.display='none'});
 window.pTip=function(mid,pick){
