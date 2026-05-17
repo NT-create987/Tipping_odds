@@ -1366,16 +1366,12 @@ function mCard(m,myTip,roundOpen=true){
   else if(m.result&&!myTip){banner=`<div class="tbn none">⏱ No tip placed — Result: ${rm[m.result]}</div>`}
   else if(myTip&&!m.result){
     const livePts=calcMatchPts(m,myTip.pick,MY_POOL)*(mult||1);
-    if(isMyJoker){
-      banner=`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct · 🎴 Joker — 2×</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px;flex-shrink:0" onclick="removeJoker('${roundKey}')">Remove</button></div>`;
-    } else {
-      banner=`<div class="tbn pend">✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct</div>`;
-    }
+    banner=`<div class="tbn pend">✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct${isMyJoker?' · 🎴 JOKER':''}</div>`;
   }
   // Joker button — per round
   let jokerBtn='';
   if(jokerOn&&!lk&&myTip){
-    if(isMyJoker)jokerBtn='';
+    if(isMyJoker)jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);background:var(--green-light);font-size:11px;display:flex;align-items:center;gap:10px"><span style="color:var(--green);font-weight:700">🎴 Joker on — 2× if correct</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px" onclick="removeJoker('${roundKey}')">Remove</button></div>`;
     else if(!jokerInThisRound)jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);font-size:11px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--muted)">🎴 Joker free this round</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
     else{
       const otherM=MY_COMP?.matches?.[jokerInThisRound];
