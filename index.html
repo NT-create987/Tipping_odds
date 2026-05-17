@@ -1393,7 +1393,7 @@ function mCard(m,myTip,roundOpen=true){
   })();
   return`<div class="mc" ${_matchData}>
     <div class="mh">
-      <span class="mbdg ${ko?'ko':''}">${m.group?'Group '+m.group:m.round||'General'}${ko?' · KO':''}</span>
+      ${m.group?`<span class="mbdg">Group ${m.group}</span>`:ko?`<span class="mbdg ko">KO</span>`:''}
       <div class="mtb"><span class="mtl">🇦🇺 ${fmtL(m.datetime)}</span>${m.venue?`<span class="mtv">📍 ${fmtV(m.datetime,m.venue)}</span>`:''}</div>
       ${lk?'<span style="color:var(--muted2);font-size:11px">🔒</span>':''}
     </div>
