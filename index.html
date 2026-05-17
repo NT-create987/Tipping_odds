@@ -1372,7 +1372,7 @@ function mCard(m,myTip,roundOpen=true){
   let jokerBtn='';
   if(jokerOn&&!lk&&myTip){
     if(isMyJoker)jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);background:var(--green-light);font-size:11px;display:flex;align-items:center;gap:10px"><span style="color:var(--green);font-weight:700">🎴 Joker on — 2× if correct</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px" onclick="removeJoker('${roundKey}')">Remove</button></div>`;
-    else if(!jokerInThisRound)jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);font-size:11px;display:flex;justify-content:space-between;align-items:center"><span style="color:var(--muted)">🎴 Joker free this round</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
+    else if(!jokerInThisRound)jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);font-size:11px;display:flex;align-items:center;gap:10px"><span style="color:var(--muted)">🎴 Joker free this round</span><button class="btn bgh bsm" style="font-size:10px;padding:3px 8px" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
     else{
       const otherM=MY_COMP?.matches?.[jokerInThisRound];
       jokerBtn=`<div style="padding:4px 10px;border-top:1px solid var(--line);font-size:11px;color:var(--muted2)">🎴 Joker used this round — ${otherM?otherM.home+' vs '+otherM.away:'another match'}</div>`;
