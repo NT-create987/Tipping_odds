@@ -705,6 +705,7 @@ let CP=null;             // current pool ID
 let curPage='land';
 let curRnd=null;
 let _tipScrollTarget=null; // scroll position to restore after a background re-render
+let _lockCheckTimer=null;  // interval that re-renders Tips so locks apply in near-real-time
 let lbMode='all';
 let lbSort='points';
 let histRndFilter=null;let histViewUser=null;
@@ -798,7 +799,7 @@ function bonusPickPts(decimalOdds){
   return Math.round(decimalOdds*50);
 }
 const isKO=m=>m.stage==='knockout';
-const isLk=m=>m.result||(m.datetime&&new Date(m.datetime)<=new Date());
+const isLk=m=>m.result||(m.datetime&&new Date(m.datetime)<=new Date(Date.now()+30*60*1000));
 const genCode=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>c[Math.floor(Math.random()*c.length)]).join('')};
 
 const tF=n=>{if(!n)return'⚽';const f={'Brazil':'🇧🇷','Argentina':'🇦🇷','France':'🇫🇷','Germany':'🇩🇪','Spain':'🇪🇸','England':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Portugal':'🇵🇹','Italy':'🇮🇹','Netherlands':'🇳🇱','Belgium':'🇧🇪','Uruguay':'🇺🇾','Mexico':'🇲🇽','USA':'🇺🇸','United States':'🇺🇸','Australia':'🇦🇺','Japan':'🇯🇵','Morocco':'🇲🇦','Senegal':'🇸🇳','Croatia':'🇭🇷','Denmark':'🇩🇰','Switzerland':'🇨🇭','South Korea':'🇰🇷','Korea Republic':'🇰🇷','Ecuador':'🇪🇨','Canada':'🇨🇦','Colombia':'🇨🇴','Peru':'🇵🇪','Chile':'🇨🇱','Panama':'🇵🇦','Costa Rica':'🇨🇷','Saudi Arabia':'🇸🇦','Iran':'🇮🇷','Nigeria':'🇳🇬','Ghana':'🇬🇭','Cameroon':'🇨🇲','Egypt':'🇪🇬','Tunisia':'🇹🇳','Czech Republic':'🇨🇿','Czechia':'🇨🇿','Austria':'🇦🇹','Poland':'🇵🇱','Serbia':'🇷🇸','Romania':'🇷🇴','Turkey':'🇹🇷','Ukraine':'🇺🇦','Slovakia':'🇸🇰','Slovenia':'🇸🇮','Greece':'🇬🇷','Scotland':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','Wales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿','Ireland':'🇮🇪','Norway':'🇳🇴','Sweden':'🇸🇪','New Zealand':'🇳🇿','Venezuela':'🇻🇪','Paraguay':'🇵🇾','South Africa':'🇿🇦','Cape Verde':'🇨🇻','Bosnia and Herzegovina':'🇧🇦','Haiti':'🇭🇹','Algeria':'🇩🇿','Ivory Coast':'🇨🇮','Qatar':'🇶🇦','Jordan':'🇯🇴','Uzbekistan':'🇺🇿','Iceland':'🇮🇸','Liverpool':'🔴','Arsenal':'🔴','Chelsea':'💙','Manchester City':'🩵','Manchester United':'🔴','Tottenham':'⚪','Newcastle':'⬛','Aston Villa':'🟣','West Ham':'🔵','Everton':'💙','Brighton':'🔵','Brentford':'🔴','Nottingham Forest':'🌳','Crystal Palace':'🦅','Fulham':'⚫','Wolves':'🟧','Bournemouth':'🍒','Burnley':'🟣','Sheffield United':'🗡','Luton':'🎩'};return f[n]||'⚽'};
@@ -974,6 +975,8 @@ function startListeners(){
   });
   dl('pools',v=>{POOLS=v||{};refreshContext();refreshAllPages()});
   dl('users',v=>{USERS=v||{};if(['lb','adm','managePool'].includes(curPage))refreshAllPages()});
+  // Re-render Tips every 60 s so match locks (30 min before kick-off) apply without needing a page reload
+  _lockCheckTimer=setInterval(()=>{if(curPage==='tips')refreshAllPages();},60000);
 }
 
 function refreshContext(){
