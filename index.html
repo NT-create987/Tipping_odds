@@ -1326,9 +1326,26 @@ function renderTips(){
     if(_b.scorer&&!myEx.scorer&&Object.keys(MY_COMP.scorerOdds||{}).length>0)_missing.push('⚽ top scorer');
     if(_missing.length)bonusNotice=`<div class="wbox" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px" onclick="showPage('bonuses')"><span>📌 Don't forget your bonus picks — you haven't chosen a ${_missing.join(' or ')} yet.</span><span style="color:var(--green);font-weight:700;white-space:nowrap">Pick now →</span></div>`;
   }
+  // Joker status for current round — show if joker bonus is on and round has eligible matches
+  let jokerNotice='';
+  if(_b.joker&&curRnd){
+    const _rk=safeRoundKey(curRnd);
+    const _roundHasJokerEligible=vis.some(m=>jokerAllowed(m,MY_COMP));
+    const _roundNotDone=vis.some(m=>!m.result);
+    if(_roundHasJokerEligible&&_roundNotDone){
+      const _playedMid=(myEx.jokerByRound||{})[_rk];
+      if(_playedMid){
+        const _jm=MY_COMP.matches?.[_playedMid];
+        const _jLabel=_jm?`${_jm.home} vs ${_jm.away}`:'a match';
+        jokerNotice=`<div class="wbox" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>🎴 Joker played — <strong>${_jLabel}</strong></span></div>`;
+      }else{
+        jokerNotice=`<div class="wbox" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>🎴 Joker not yet played this round</span><span style="color:var(--muted);font-size:12px">Play it on any match below</span></div>`;
+      }
+    }
+  }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  el.innerHTML=bonusNotice+pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
+  el.innerHTML=bonusNotice+jokerNotice+pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   if(_tipScrollTarget>10){const t=_tipScrollTarget;requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,t);}));}
   updateSaveBar();
 }
