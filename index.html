@@ -1395,18 +1395,13 @@ function mCard(m,myTip,roundOpen=true){
   }
   else if(m.result&&!myTip){banner=`<div class="tbn none">⏱ No tip placed — Result: ${rm[m.result]}</div>`}
   else if(myTip&&!m.result){
-    const livePts=calcMatchPts(m,myTip.pick,MY_POOL)*(mult||1);
-    // Joker action: inline button on right of banner — only show on this card
-    let jokerAction='';
+    // No pending tip text — selection is already visible from the highlighted pick button
+    // Only show a strip if there's a joker action on this card
     if(jokerOn&&!lk){
-      if(isMyJoker)jokerAction=`<button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button>`;
-      else if(!jokerInThisRound)jokerAction=`<button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button>`;
-      // joker used elsewhere — nothing shown on this card
+      if(isMyJoker)banner=`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px"><span style="font-size:11px;font-weight:700;color:var(--green)">🎴 Joker on — 2× if correct</span><button class="btn bd bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button></div>`;
+      else if(!jokerInThisRound)banner=`<div class="tbn pend" style="display:flex;justify-content:flex-end;align-items:center;padding:5px 10px"><button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
+      // joker used elsewhere — no strip at all
     }
-    const jokerLabel=isMyJoker?' 🎴':'';
-    banner=jokerAction
-      ?`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span>✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct${jokerLabel}</span>${jokerAction}</div>`
-      :`<div class="tbn pend">✓ Tip: ${rm[myTip.pick]} · ${Math.round(livePts)} pts if correct${jokerLabel}</div>`;
   }
   const jokerBtn='';
   let multBadge='';
