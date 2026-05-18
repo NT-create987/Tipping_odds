@@ -1314,12 +1314,21 @@ function renderTips(){
   // If round not open, add a notice at top
   let pendingNotice='';
   if(curRnd&&!_curRoundOpen){
-    const missing=vis.filter(m=>!m.result&&(!m.oddsH||m.oddsH<1.01)).length;
     pendingNotice=`<div class="wbox">⏳ Tipping not open yet.</div>`;
+  }
+  // Bonus pick reminder — only when comp hasn't started and player is missing eligible picks
+  let bonusNotice='';
+  const _b=MY_POOL?.bonuses||{};
+  const _compStarted=matches.some(m=>(m.datetime&&new Date(m.datetime).getTime()<Date.now())||m.result);
+  if(!_compStarted){
+    const _missing=[];
+    if(_b.winner&&!myEx.winner&&Object.keys(MY_COMP.winnerOdds||{}).length>0)_missing.push('🏆 tournament winner');
+    if(_b.scorer&&!myEx.scorer&&Object.keys(MY_COMP.scorerOdds||{}).length>0)_missing.push('⚽ top scorer');
+    if(_missing.length)bonusNotice=`<div class="wbox" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px" onclick="showPage('bonuses')"><span>📌 Don't forget your bonus picks — you haven't chosen a ${_missing.join(' or ')} yet.</span><span style="color:var(--green);font-weight:700;white-space:nowrap">Pick now →</span></div>`;
   }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  el.innerHTML=pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
+  el.innerHTML=bonusNotice+pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   if(_tipScrollTarget>10){const t=_tipScrollTarget;requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,t);}));}
   updateSaveBar();
 }
