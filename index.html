@@ -1420,16 +1420,17 @@ function mCard(m,myTip,roundOpen=true){
     banner=won?`<div class="tbn won">✅ Correct! +${finalPts} pts${mult>1?` (${mult}× bonus!)`:''} — ${rm[m.result]}</div>`:`<div class="tbn lost">❌ You picked ${rm[myTip.pick]} — ${m.result==='D'?'it was a draw':winner+' won'}</div>`;
   }
   else if(m.result&&!myTip){banner=`<div class="tbn none">⏱ No tip placed — Result: ${rm[m.result]}</div>`}
-  else if(myTip&&!m.result){
-    // No pending tip text — selection is already visible from the highlighted pick button
-    // Only show a strip if there's a joker action on this card
-    if(jokerOn&&!lk){
-      if(isMyJoker)banner=`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px"><span style="font-size:11px;font-weight:700;color:var(--green)">🎴 Joker on — 2× if correct</span><button class="btn bd bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button></div>`;
-      else if(!jokerInThisRound)banner=`<div class="tbn pend" style="display:flex;justify-content:flex-end;align-items:center;padding:5px 10px"><button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
-      // joker used elsewhere — no strip at all
+  // Joker strip — rendered independently of tip state so card height never changes on pick
+  // Always show for eligible unlocked pre-game matches; hides when round is done
+  let jokerBtn='';
+  if(jokerOn&&!lk&&!m.result){
+    if(isMyJoker){
+      jokerBtn=`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px"><span style="font-size:11px;font-weight:700;color:var(--green)">🎴 Joker on — 2× if correct</span><button class="btn bd bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button></div>`;
+    } else if(!jokerInThisRound){
+      jokerBtn=`<div class="tbn pend" style="display:flex;justify-content:flex-end;align-items:center;padding:5px 10px"><button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
     }
+    // joker played elsewhere in this round — no strip on this card
   }
-  const jokerBtn='';
   let multBadge='';
   if(koMultActive>1){multBadge=`<div style="padding:5px 16px;font-size:11px;color:var(--blue);background:var(--blue-light);font-weight:600">📈 ${koMultActive}× knockout multiplier active</div>`}
   const oddsRow=hasOdds?`<div class="or">
