@@ -316,9 +316,11 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div class="aicon">🔑</div>
     <div class="atitle">Sign <span class="g">In</span></div>
     <div class="asub">Welcome back. Your tips are waiting.</div>
+    <form onsubmit="doLogin();return false;" style="width:100%">
     <div class="fld" style="text-align:left"><label>Email</label><input type="text" id="le" inputmode="email" placeholder="Your email" autocomplete="email"></div>
     <div class="fld" style="text-align:left"><label>Password</label><input type="password" id="lp" placeholder="Your password" autocomplete="current-password"></div>
-    <button class="btn bp bbl" onclick="doLogin()" style="margin-top:6px">Sign In →</button>
+    <button type="submit" class="btn bp bbl" style="margin-top:6px">Sign In →</button>
+    </form>
     <div style="margin-top:10px"><button class="btn bgh bbl" onclick="showPage('forgot')" style="font-size:12px">Forgot password?</button></div>
     <div class="asw">No account? <a onclick="showPage('reg')">Create one</a></div>
   </div>
