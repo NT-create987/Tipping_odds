@@ -1406,12 +1406,6 @@ function mCard(m,myTip,roundOpen=true){
     return c;
   };
   let trev='';
-  if(lk&&tc>0){
-    const hc=tippers.filter(p=>p[m.id]?.pick==='H').length;
-    const dc=!ko?tippers.filter(p=>p[m.id]?.pick==='D').length:0;
-    const ac=tippers.filter(p=>p[m.id]?.pick==='A').length;
-    trev=`<div class="tcre"><span>🏠 ${hc}</span>${!ko?`<span>🤝 ${dc}</span>`:''}<span>✈ ${ac}</span><span style="margin-left:auto">${tc}/${memCount} tipped</span></div>`;
-  }else if(!lk&&tc>0){trev=`<div class="tcr">👥 ${tc} of ${memCount} have tipped</div>`}
   let banner='';
   if(m.result&&myTip){
     const won=myTip.pick===m.result;
