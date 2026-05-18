@@ -385,8 +385,8 @@ hr.dv{border:none;border-top:1px solid var(--line);margin:18px 0}
     <div style="text-align:left;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
       <label class="bfChk"><input type="checkbox" id="bf-joker"><div><strong>🎴 Joker</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Each tipper picks one match for double points.</div></div></label>
       <label class="bfChk"><input type="checkbox" id="bf-koMult"><div><strong>📈 Knockout Multiplier</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">R32–QF: 1.5×, Semis: 2×, Final: 3×</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-winner"><div><strong>🏆 Tournament Winner</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = team odds × 30.</div></div></label>
-      <label class="bfChk"><input type="checkbox" id="bf-scorer"><div><strong>⚽ Top Scorer</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = player odds × 30.</div></div></label>
+      <label class="bfChk"><input type="checkbox" id="bf-winner"><div><strong>🏆 Tournament Winner</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = team odds × 20.</div></div></label>
+      <label class="bfChk"><input type="checkbox" id="bf-scorer"><div><strong>⚽ Top Scorer</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Pre-tournament pick. Bonus = player odds × 20.</div></div></label>
       <label class="bfChk"><input type="checkbox" id="bf-noise"><div><strong>🎲 Odds Noise (±5%)</strong><div style="font-size:11px;color:var(--muted);margin-top:2px">Adds randomness so the in-app odds don't perfectly match the bookies. Set when admin refreshes odds.</div></div></label>
     </div>
     <button class="btn bg-grn bbl" onclick="doCreatePool()">Create Pool →</button>
@@ -795,10 +795,10 @@ function tipPoints(match,tip,pool,extras){
   return Math.round(pts);
 }
 // Bonus pick points (tournament winner / top scorer)
-// odds × 30: linear in odds, so halving the probability doubles the points
+// odds × 20: linear in odds, so halving the probability doubles the points
 function bonusPickPts(decimalOdds){
   if(!decimalOdds||decimalOdds<1.01)return 0;
-  return Math.round(decimalOdds*30);
+  return Math.round(decimalOdds*20);
 }
 const isKO=m=>m.stage==='knockout';
 const isLk=m=>m.result||(m.datetime&&new Date(m.datetime)<=new Date(Date.now()+30*60*1000));
