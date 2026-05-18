@@ -1343,9 +1343,15 @@ function renderTips(){
       }
     }
   }
+  // Untipped reminder — only when round is fully open and player has missing tips
+  let untippedNotice='';
+  if(_curRoundOpen){
+    const _untipped=vis.filter(m=>!m.result&&!tips[m.id]).length;
+    if(_untipped>0)untippedNotice=`<div class="wbox">⚠ You have <strong>${_untipped} untipped match${_untipped!==1?'es':''}</strong> this round.</div>`;
+  }
   const el=document.getElementById('tlist');
   if(!vis.length){el.innerHTML='<div class="emp"><div class="ei">🕐</div><p>No matches yet.<br>Check back soon!</p></div>';return}
-  el.innerHTML=bonusNotice+jokerNotice+pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
+  el.innerHTML=bonusNotice+untippedNotice+jokerNotice+pendingNotice+vis.map(m=>mCard(m,tips[m.id],_curRoundOpen)).join('');
   if(_tipScrollTarget>10){const t=_tipScrollTarget;requestAnimationFrame(()=>requestAnimationFrame(()=>{window.scrollTo(0,t);}));}
   updateSaveBar();
 }
