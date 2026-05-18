@@ -2412,7 +2412,10 @@ window.addWinnerOdds=async function(){
   const odds=parseFloat(document.getElementById('aw-odds').value);
   if(!team||isNaN(odds)||odds<1.01){toast('Fill in team and valid odds','err');return}
   await ds(`comps/${adminComp}/winnerOdds/${safeKey(team)}`,odds);
+  // Update local cache immediately — don't wait for Firebase round-trip
+  if(COMPS[adminComp]){if(!COMPS[adminComp].winnerOdds)COMPS[adminComp].winnerOdds={};COMPS[adminComp].winnerOdds[safeKey(team)]=odds;}
   document.getElementById('aw-team').value='';document.getElementById('aw-odds').value='';
+  renderBonusAdmin();
   toast(team+' added','ok');
 };
 
@@ -2515,7 +2518,10 @@ window.addScorerOdds=async function(){
   const odds=parseFloat(document.getElementById('as-odds').value);
   if(!player||isNaN(odds)||odds<1.01){toast('Fill in player and valid odds','err');return}
   await ds(`comps/${adminComp}/scorerOdds/${safeKey(player)}`,odds);
+  // Update local cache immediately — don't wait for Firebase round-trip
+  if(COMPS[adminComp]){if(!COMPS[adminComp].scorerOdds)COMPS[adminComp].scorerOdds={};COMPS[adminComp].scorerOdds[safeKey(player)]=odds;}
   document.getElementById('as-player').value='';document.getElementById('as-odds').value='';
+  renderBonusAdmin();
   toast(player+' added','ok');
 };
 window.delScorerOdds=async function(player){
@@ -2639,21 +2645,27 @@ function renderBonuses(){
   document.getElementById('bonuses-content').innerHTML=html;
 }
 
-window.confirmWinnerPick=async function(){
-  const sel=document.getElementById('winner-pick');
-  if(!sel||!sel.value)return;
-  const team=sel.value;
-  const odds=parseFloat(sel.options[sel.selectedIndex].dataset.odds);
+window.confirmWinnerPick=async function(team,odds){
+  if(!team||!odds||!CP||!CU)return;
   await du(`extras/${CP}/${CU.username}`,{winner:team,winnerOdds:odds});
   toast('Winner saved: '+team+' ('+bonusPickPts(odds)+' pts if correct)','ok');
+  renderBonuses();
 };
-window.confirmScorerPick=async function(){
-  const sel=document.getElementById('scorer-pick');
-  if(!sel||!sel.value)return;
-  const player=sel.value;
-  const odds=parseFloat(sel.options[sel.selectedIndex].dataset.odds);
+window.confirmScorerPick=async function(player,odds){
+  if(!player||!odds||!CP||!CU)return;
   await du(`extras/${CP}/${CU.username}`,{scorer:player,scorerOdds:odds});
   toast('Scorer saved: '+player+' ('+bonusPickPts(odds)+' pts if correct)','ok');
+  renderBonuses();
+};
+window.clearWinnerPick=async function(){
+  if(!CP||!CU)return;
+  await du(`extras/${CP}/${CU.username}`,{winner:null,winnerOdds:null});
+  renderBonuses();
+};
+window.clearScorerPick=async function(){
+  if(!CP||!CU)return;
+  await du(`extras/${CP}/${CU.username}`,{scorer:null,scorerOdds:null});
+  renderBonuses();
 };
 
 // ─── AUTH STATE ────────────────────────
