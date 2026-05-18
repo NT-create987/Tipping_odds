@@ -1250,8 +1250,9 @@ function renderTips(){
       const now=Date.now();
       const started=rnds.filter(rn=>{
         const rms=matches.filter(m=>(m.round||'General')===rn);
+        const hasResult=rms.some(m=>m.result);
         const earliest=Math.min(...rms.map(m=>new Date(m.datetime||0).getTime()).filter(t=>t>0))||0;
-        return earliest&&earliest<=now;
+        return hasResult||(earliest&&earliest<=now);
       });
       curRnd=started.length?started[started.length-1]:rnds[0];
     }
