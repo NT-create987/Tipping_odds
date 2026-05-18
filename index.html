@@ -2650,7 +2650,7 @@ function renderBonuses(){
     const ct=compTypeOf(MY_COMP);
     const eligibleRounds={};
     matches.forEach(m=>{
-      const ok=(ct==='league')||(ct==='tournament'&&m.stage==='group');
+      const ok=jokerAllowed(m,MY_COMP);
       if(ok){const r=m.round||'General';(eligibleRounds[r]=eligibleRounds[r]||[]).push(m)}
     });
     const roundList=Object.keys(eligibleRounds).sort((a,b)=>roundCompare(a,b,ct));
