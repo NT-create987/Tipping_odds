@@ -1028,7 +1028,7 @@ function renderPoolSelector(){
   }
 }
 
-window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
+window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);curRnd=null;refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
 
 // ─── POOLS ────────────────────────
 function renderMyPools(){
