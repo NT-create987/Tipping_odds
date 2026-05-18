@@ -735,11 +735,10 @@ function getMatchOdds(match,pool){
 // Joker eligibility: large tournaments (has R32) = joker for R32+R16 only;
 // small tournaments (Euros etc) = joker for all except QF/SF/Final/3PP
 function jokerAllowed(m,comp){
-  const allMatches=comp?.matches?Object.values(comp.matches):[];
-  const hasR32=allMatches.some(mx=>{const r=(mx.round||'').toLowerCase();return r.includes('32')||r.includes('round of 32');});
+  // Joker allowed on all rounds except the late knockout stages (QF, SF, Final, 3PP)
+  // This applies to both large tournaments (WC with R32) and small ones (Euros etc)
   const rnd=(m.round||'').toLowerCase();
-  if(hasR32){return rnd.includes('32')||rnd.includes('16');}
-  else{return!rnd.includes('quarter')&&!rnd.includes('semi')&&!rnd.includes('final')&&!rnd.includes('third')&&!rnd.includes('playoff');}
+  return!rnd.includes('quarter')&&!rnd.includes('semi')&&!rnd.includes('final')&&!rnd.includes('third')&&!rnd.includes('playoff');
 }
 function calcMatchPts(match,pick,pool){
   if(!match||!match.oddsH||match.oddsH<1.01)return 0;
@@ -956,6 +955,7 @@ window.doForgot=async function(){
 };
 
 // ─── LISTENERS ────────────────────────
+let _compsRefreshTimer=null;
 function startListeners(){
   dl('comps',v=>{
     COMPS=v||{};
@@ -967,7 +967,10 @@ function startListeners(){
         c.compType=preset?.compType||(c.hasGroups?'tournament':'league');
       }
     });
-    refreshContext();refreshAllPages();
+    refreshContext();
+    // Debounce: rapid writes (e.g. bulk odds/scorer adds) coalesce into one re-render
+    clearTimeout(_compsRefreshTimer);
+    _compsRefreshTimer=setTimeout(refreshAllPages,400);
   });
   dl('pools',v=>{POOLS=v||{};refreshContext();refreshAllPages()});
   dl('users',v=>{USERS=v||{};if(['lb','adm','managePool'].includes(curPage))refreshAllPages()});
