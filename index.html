@@ -1464,6 +1464,10 @@ window.playJoker=async function(mid,roundKey){
   const ex=getMyExtras();
   if(ex.jokerByRound?.[roundKey]){toast('Joker already played for this round','err');return}
   await ds(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`,mid);
+  // Update local cache immediately so UI reflects the change without waiting for Firebase callback
+  if(!ex.jokerByRound)ex.jokerByRound={};
+  ex.jokerByRound[roundKey]=mid;
+  renderTips();
   toast('🎴 Joker played!','ok');
 };
 window.removeJoker=async function(roundKey){
@@ -1474,6 +1478,9 @@ window.removeJoker=async function(roundKey){
   const m=MY_COMP?.matches?.[mid];
   if(m&&isLk(m)){toast('Joker match already locked — can\'t remove','err');return}
   await dr(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`);
+  // Update local cache immediately so UI reflects the change without waiting for Firebase callback
+  if(ex.jokerByRound)delete ex.jokerByRound[roundKey];
+  renderTips();
   toast('Joker removed','ok');
 };
 window.setWinnerPick=async function(team){
