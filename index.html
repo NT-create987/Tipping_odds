@@ -1300,7 +1300,7 @@ function renderTips(){
         tabs.appendChild(b);
       });
     }
-    setTimeout(()=>{const a=tabs.querySelector('.tp.active');if(a&&a.scrollIntoView)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
+    setTimeout(()=>{const a=tabs.querySelector('.tp.active');if(a)tabs.scrollLeft=a.offsetLeft-tabs.offsetWidth/2+a.offsetWidth/2;},50);
   }else curRnd=rnds[0]||null;
   let vis=rnds.length>1?matches.filter(m=>(m.round||'General')===curRnd):matches;
   // Sort chronologically within the round
@@ -1697,7 +1697,7 @@ function renderHist(un){
     filterEl.innerHTML='<div class="trow scroll" style="border:none;margin-bottom:8px">'
       +['All',...rounds].map(r=>`<button class="tp${(r==='All'?!histRndFilter:histRndFilter===r)?' active':''}" onclick="setHistFilter(${r==='All'?'null':"'"+r.replace(/'/g,"\\'")+"'"})"> ${r}</button>`).join('')
       +'</div>';
-    setTimeout(()=>{const a=filterEl.querySelector('.tp.active');if(a)a.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'})},50);
+    setTimeout(()=>{const a=filterEl.querySelector('.tp.active');if(a){const strip=filterEl.querySelector('.trow');if(strip)strip.scrollLeft=a.offsetLeft-strip.offsetWidth/2+a.offsetWidth/2;}},50);
   }
   // Apply filter
   const visibleRounds=histRndFilter?rounds.filter(r=>r===histRndFilter):rounds;
@@ -1715,14 +1715,14 @@ function renderHist(un){
     html+=`<div class="hist-rn-hdr" style="margin:14px 0 8px;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px"><span>${rn}</span><span style="font-size:11px;font-weight:500">${summary}</span></div>`;
     html+=rms.map(m=>{
       const t=mt[m.id];
-      let cls='pend',lbl='—',bdg='';
+      let cls='pend',lbl='—',bdg='',sub='';
       if(!t&&m.result){bdg=`<span class="bdg gy">No tip</span>`;lbl='0 pts';cls='lost'}
       else if(!t)return '';
       else if(!m.result){bdg=`<span class="bdg bl">${rm[t.pick]}</span>`;lbl='Pending';cls='pend'}
       else if(t.pick===m.result){bdg=`<span class="bdg gr">✓ ${rm[t.pick]}</span>`;lbl='+'+tipPoints(m,t,MY_POOL,ex)+' pts';cls='won'}
-      else{bdg=`<span class="bdg rd">✗ ${rm[t.pick]} (was ${rm[m.result]})</span>`;lbl='0 pts';cls='lost'}
+      else{bdg=`<span class="bdg rd">✗ ${rm[t.pick]}</span>`;sub=`was ${rm[m.result]}`;lbl='0 pts';cls='lost'}
       const score=m.scoreH!=null&&m.scoreA!=null?` <span style="font-family:'JetBrains Mono',monospace;color:var(--ink2);font-weight:600;margin-left:6px">${m.scoreH}-${m.scoreA}</span>`:'';
-      return`<div class="hi" style="${cls==='won'?'background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.2)':''}"><div><div class="hm">${m.home} vs ${m.away}${score}</div><div class="hs">${fmtL(m.datetime)}</div></div><div style="text-align:right">${bdg}<div class="hpts ${cls}" style="margin-top:3px">${lbl}</div></div></div>`;
+      return`<div class="hi" style="${cls==='won'?'background:rgba(16,185,129,0.04);border-color:rgba(16,185,129,0.2)':''}"><div><div class="hm">${m.home} vs ${m.away}${score}</div><div class="hs">${fmtL(m.datetime)}</div></div><div style="text-align:right">${bdg}<div style="font-size:10px;color:var(--muted);min-height:14px;margin-top:1px">${sub}</div><div class="hpts ${cls}" style="margin-top:1px">${lbl}</div></div></div>`;
     }).join('');
   }
   el.innerHTML=html;
