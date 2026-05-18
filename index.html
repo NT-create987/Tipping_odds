@@ -1028,7 +1028,7 @@ function renderPoolSelector(){
   }
 }
 
-window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);curRnd=null;refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
+window.switchPool=function(pid){CP=pid;MY_POOL=POOLS[pid];MY_COMP=COMPS[MY_POOL?.compId];saveLastPool(pid);curRnd=null;renderPoolSelector();refreshAllPages();toast('Switched to '+MY_POOL?.name,'ok')};
 
 // ─── POOLS ────────────────────────
 function renderMyPools(){
@@ -1795,7 +1795,7 @@ document.getElementById('ast').onchange=function(){document.getElementById('adf'
 
 function renderAdm(){
   if(!CU?.isAdmin)return;
-  if(!adminComp){const first=Object.keys(COMPS)[0];if(first)adminComp=first}
+  if(!adminComp){const preferred=MY_COMP?.id||Object.keys(COMPS)[0];if(preferred)adminComp=preferred}
   autoLockNearRounds();
   const ct=compTypeOf(COMPS[adminComp]);
   // Populate matchday datalist for Add Match
