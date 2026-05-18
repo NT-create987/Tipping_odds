@@ -1420,16 +1420,19 @@ function mCard(m,myTip,roundOpen=true){
     banner=won?`<div class="tbn won">✅ Correct! +${finalPts} pts${mult>1?` (${mult}× bonus!)`:''} — ${rm[m.result]}</div>`:`<div class="tbn lost">❌ You picked ${rm[myTip.pick]} — ${m.result==='D'?'it was a draw':winner+' won'}</div>`;
   }
   else if(m.result&&!myTip){banner=`<div class="tbn none">⏱ No tip placed — Result: ${rm[m.result]}</div>`}
-  // Joker strip — rendered independently of tip state so card height never changes on pick
-  // Always show for eligible unlocked pre-game matches; hides when round is done
+  // Joker strip — always rendered as a fixed-height row for ALL eligible pre-game matches
+  // so card size never changes regardless of joker state
+  const _jStrip='border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;min-height:34px;box-sizing:border-box';
   let jokerBtn='';
   if(jokerOn&&!lk&&!m.result){
     if(isMyJoker){
-      jokerBtn=`<div class="tbn pend" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 10px"><span style="font-size:11px;font-weight:700;color:var(--green)">🎴 Joker on — 2× if correct</span><button class="btn bd bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button></div>`;
+      jokerBtn=`<div style="${_jStrip}"><span style="font-size:11px;font-weight:700;color:var(--green)">🎴 Joker on — 2× if correct</span><button class="btn bd bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="removeJoker('${roundKey}')">Remove Joker</button></div>`;
     } else if(!jokerInThisRound){
-      jokerBtn=`<div class="tbn pend" style="display:flex;justify-content:flex-end;align-items:center;padding:5px 10px"><button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
+      jokerBtn=`<div style="${_jStrip}"><span></span><button class="btn bgh bsm" style="font-size:10px;padding:3px 10px;white-space:nowrap" onclick="playJoker('${m.id}','${roundKey}')">Play Joker</button></div>`;
+    } else {
+      // joker used elsewhere — same height empty strip keeps card size identical
+      jokerBtn=`<div style="${_jStrip}"></div>`;
     }
-    // joker played elsewhere in this round — no strip on this card
   }
   let multBadge='';
   if(koMultActive>1){multBadge=`<div style="padding:5px 16px;font-size:11px;color:var(--blue);background:var(--blue-light);font-weight:600">📈 ${koMultActive}× knockout multiplier active</div>`}
@@ -1493,6 +1496,7 @@ window.playJoker=async function(mid,roundKey){
   // Update local cache immediately so UI reflects the change without waiting for Firebase callback
   if(!ex.jokerByRound)ex.jokerByRound={};
   ex.jokerByRound[roundKey]=mid;
+  _tipScrollTarget=window.scrollY;setTimeout(()=>{_tipScrollTarget=null;},600);
   renderTips();
   toast('🎴 Joker played!','ok');
 };
@@ -1506,6 +1510,7 @@ window.removeJoker=async function(roundKey){
   await dr(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`);
   // Update local cache immediately so UI reflects the change without waiting for Firebase callback
   if(ex.jokerByRound)delete ex.jokerByRound[roundKey];
+  _tipScrollTarget=window.scrollY;setTimeout(()=>{_tipScrollTarget=null;},600);
   renderTips();
   toast('Joker removed','ok');
 };
