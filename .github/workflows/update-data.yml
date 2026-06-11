@@ -257,6 +257,10 @@ jobs:
                         // TBD match that now has real teams — update teams, round, stage
                         await fbPatch('comps/' + compId + '/matches/' + apiId, { home, away, round, stage, datetime: localDt });
                         updated++;
+                      } else if (existing.datetime !== localDt) {
+                        // Existing un-played match whose stored datetime is stale/wrong — refresh it
+                        await fbPatch('comps/' + compId + '/matches/' + apiId, { datetime: localDt });
+                        updated++;
                       } else {
                         skipped++;
                       }
