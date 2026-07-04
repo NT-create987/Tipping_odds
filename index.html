@@ -782,12 +782,10 @@ function tipPoints(match,tip,pool,extras){
   if(!tip||!match.result||tip.pick!==match.result)return 0;
   let pts=calcMatchPts(match,tip.pick,pool);
   if(pool?.bonuses?.koMult&&match.stage==='knockout')pts*=koMultiplier(match.round);
-  // Joker: applies in any round for leagues; group-stage only for tournaments
+  // Joker: applies to any jokerAllowed round
   if(pool?.bonuses?.joker){
     const comp=COMPS[pool.compId];
-    const ct=compTypeOf(comp);
-    const eligible=(ct==='league')||(ct==='tournament'&&match.stage==='group');
-    if(eligible){
+    if(jokerAllowed(match,comp)){
       const rk=safeRoundKey(match.round);
       if(rk&&extras?.jokerByRound?.[rk]===match.id)pts*=2;
     }
@@ -1492,9 +1490,7 @@ window.playJoker=async function(mid,roundKey){
   if(!CU||!CP||!roundKey)return;
   const m=MY_COMP?.matches?.[mid];
   if(!m||isLk(m)){toast('Match locked','err');return}
-  // For tournaments: only group-stage matches
-  const ct=compTypeOf(MY_COMP);
-  if(ct==='tournament'&&m.stage!=='group'){toast('Joker only works on group stage matches','err');return}
+  if(!jokerAllowed(m,MY_COMP)){toast('Joker not available for this match','err');return}
   const ex=getMyExtras();
   if(ex.jokerByRound?.[roundKey]){toast('Joker already played for this round','err');return}
   await ds(`extras/${CP}/${CU.username}/jokerByRound/${roundKey}`,mid);
