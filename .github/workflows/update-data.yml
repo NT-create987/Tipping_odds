@@ -226,7 +226,7 @@ jobs:
                           round = 'Matchday ' + (mx.matchday || '?');
                         }
                       }
-                      const localDt = new Date(dt).toISOString().slice(0, 16);
+                      const localDt = new Date(dt).toISOString().slice(0, 16) + ':00Z';
                       // Capture result if present
                       let result = null, scoreH = null, scoreA = null;
                       if (mx.status === 'FINISHED' && mx.score && mx.score.fullTime) {
