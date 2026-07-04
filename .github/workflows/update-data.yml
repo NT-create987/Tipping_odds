@@ -226,7 +226,7 @@ jobs:
                           round = 'Matchday ' + (mx.matchday || '?');
                         }
                       }
-                      const localDt = new Date(dt).toISOString().slice(0, 16) + 'Z';
+                      const localDt = new Date(dt).toISOString().slice(0, 16);
                       // Capture result if present
                       let result = null, scoreH = null, scoreA = null;
                       if (mx.status === 'FINISHED' && mx.score && mx.score.fullTime) {
@@ -236,6 +236,7 @@ jobs:
                         else if (scoreA > scoreH) result = 'A';
                         else result = 'D';
                       }
+                      const isPlaceholder = n => !n || n === 'TBD' || /winner|runner|loser|group [a-z]/i.test(n);
                       if (existing && existing.result) {
                         // Already finished — never re-fetch
                         skipped++;
@@ -248,18 +249,14 @@ jobs:
                         });
                         added++;
                       } else if (result && !existing.result) {
-                        // Existing match, new result — update result and team names if they were TBD
+                        // Existing match, new result — update result and team names if they were placeholder
                         const patch = { result, scoreH, scoreA };
-                        if (existing.home === 'TBD' && home !== 'TBD') { patch.home = home; patch.away = away; patch.round = round; patch.stage = stage; }
+                        if (isPlaceholder(existing.home) && !isPlaceholder(home)) { patch.home = home; patch.away = away; patch.round = round; patch.stage = stage; }
                         await fbPatch('comps/' + compId + '/matches/' + apiId, patch);
                         updated++;
-                      } else if (!existing.result && existing.home === 'TBD' && home !== 'TBD') {
-                        // TBD match that now has real teams — update teams, round, stage
+                      } else if (!existing.result && isPlaceholder(existing.home) && !isPlaceholder(home)) {
+                        // Placeholder match that now has real teams — update teams, round, stage
                         await fbPatch('comps/' + compId + '/matches/' + apiId, { home, away, round, stage, datetime: localDt });
-                        updated++;
-                      } else if (existing.datetime !== localDt) {
-                        // Existing un-played match whose stored datetime is stale/wrong — refresh it
-                        await fbPatch('comps/' + compId + '/matches/' + apiId, { datetime: localDt });
                         updated++;
                       } else {
                         skipped++;
